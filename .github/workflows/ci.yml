@@ -1,0 +1,41 @@
+name: DecisionTrace checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install contract validator and web dependencies
+        run: |
+          python -m pip install openapi-spec-validator==0.7.2 jsonschema==4.26.0
+          npm ci --prefix web
+      - name: Static checks
+        run: python tools/check_all.py
+      - name: Formal contract validation
+        run: |
+          python -c "import json; from openapi_spec_validator import validate_spec; validate_spec(json.load(open('contracts/openapi.json'))); print('OpenAPI validated')"
+          python -c "import json; from jsonschema import Draft202012Validator; Draft202012Validator.check_schema(json.load(open('contracts/events.schema.json'))); print('Event schema validated')"
+      - name: Start local stack
+        run: docker compose --env-file .env.example up --build -d
+      - name: Seed and smoke
+        run: |
+          docker compose --env-file .env.example exec -T api python -m api.app.seed
+          docker compose --env-file .env.example exec -T api python -m api.app.smoke
+          curl --fail --silent http://127.0.0.1:8001/health/ready
+          curl --fail --silent http://127.0.0.1:5174/
+      - name: Stop local stack
+        if: always()
+        run: docker compose --env-file .env.example down

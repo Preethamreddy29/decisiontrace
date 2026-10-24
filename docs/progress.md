@@ -1,0 +1,50 @@
+# Progress
+
+**As of:** 2026-10-24
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation in progress
+
+## 2026-10-24 continuation
+
+- Chose the MIT license after the maintainer delegated the suitable-license choice.
+- Authored 14 versioned synthetic source records and 25 exact gold labels, including valid/recorded-time distinction, correction, supersession, drift, conflict, abstention, permission denial, revocation, and adversarial text.
+- Froze corpus file hashes in `corpus/manifest.json`. `python tools/validate_corpus.py` passes. Corrected an early source that inadvertently mentioned a future correction in a historical version.
+- Added the conceptual ERD/lifecycle and temporal rules, 10 ADRs, requirements traceability, threat-to-test map, signature UI-to-data trace, versioned OpenAPI and event schemas.
+- Validated 13 OpenAPI 3.1 operations with `openapi-spec-validator==0.7.2`, checked the event schema with Draft 2020-12, and passed `python tools/validate_contracts.py`. Phase 1's **design** gate is recorded in `docs/release/phase1-design-gate.md`; no runtime control is implied by it.
+- Built a Phase 2 Compose stack with PostgreSQL, one checksummed baseline migration, FastAPI readiness service, lease-based worker skeleton, and React readiness shell. API and web containers run as non-root users.
+- `npm run build` and `python tools/check_all.py` pass. `docker compose --env-file .env.example up --build -d` starts the local stack; API and PostgreSQL report healthy; the web page and its API proxy return HTTP 200.
+- Seeded the fictional corpus twice without duplicates. `python -m api.app.smoke` in the API container passes with 2 tenants, 14 source versions, 1 migration, and a worker-delivered outbox ping.
+- Verified an unknown API route returns a problem JSON 404 with a request ID. Stopping PostgreSQL made readiness return problem JSON 503; restarting it restored HTTP 200.
+- Added a CI workflow, but it has **not run on GitHub** because these files have not been committed or pushed.
+
+## Current open work
+
+- Phase 2 full gate remains open until CI passes from a clean runner and the clean-clone process is recorded. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
+- No product source-ingestion, approval, retrieval, answer, citation, deletion, or drift endpoint is implemented. The OpenAPI contract documents intended behavior only.
+- No model, evaluator, 100-question set, security/failure suite, RuleTwin connector, or runnable DecisionTrace product demo exists.
+- All new work is local and uncommitted; GitHub remains unchanged.
+
+## Next checkpoint
+
+Complete the Phase 2 CI/clean-clone gate, then build the Phase 3 one-tenant temporal cited-answer slice against the frozen 25-case seed corpus. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+
+## Original 2026-10-23 setup record
+
+## Done
+
+- Confirmed the supplied local folder and GitHub repository were empty at project start.
+- Initialized the local Git repository on `main`.
+- Defined the product boundary, first-demo workflow, synthetic-only rule, and parallel RuleTwin dependency.
+- Drafted the six-month corpus outline and 25 initial gold-question specifications.
+- Drafted valid/recorded-time, correction/supersession, citation, and authorization invariants.
+- Established milestone gates and an explicit list of Phase 0 gaps.
+
+## Not done
+
+- No synthetic source corpus, exact gold answers, corpus manifest, or license decision.
+- No completed Phase 1 ERD, API/event contracts, ADRs, threat-to-test mapping, or reviewed security design.
+- No application code, tests, database, UI, model, local demo, RuleTwin connection, CI, or release.
+- Nothing has been committed or pushed to GitHub as part of this setup.
+
+## Next checkpoint
+
+Finish Phase 0 corpus and answer labels, then validate the Phase 1 contracts before implementing the standalone temporal cited-answer slice. Keep all claims of demo readiness tied to runnable checks and a clean-start script.

@@ -1,0 +1,1596 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DecisionTrace first-slice API",
+    "version": "0.1.0",
+    "description": "Draft local contract. Tenant and role are derived from the authenticated server context. It is not implemented yet."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/sources": {
+      "post": {
+        "operationId": "createSource",
+        "summary": "Create a versioned governed source",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceVersion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+      "/v1/sources/{source_id}/versions": {
+        "post": {
+          "operationId": "appendSourceVersion",
+          "summary": "Append a corrected or updated source version",
+          "parameters": [
+            {
+              "name": "source_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            {
+              "name": "Idempotency-Key",
+              "in": "header",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 128
+              }
+            },
+            {
+              "name": "If-Match",
+              "in": "header",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceCreate"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "New immutable source version",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SourceVersion"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    "/v1/sources/{source_id}/versions/{version_id}": {
+      "get": {
+        "operationId": "getSourceVersion",
+        "summary": "Open an authorized exact source version",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/source-versions/{version_id}": {
+      "delete": {
+        "operationId": "revokeSourceVersion",
+        "summary": "Tombstone access before asynchronous cleanup",
+        "parameters": [
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Revocation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/decision-contracts": {
+      "post": {
+        "operationId": "createDecisionDraft",
+        "summary": "Create an unapproved decision contract",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created as draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/decision-contracts/{decision_id}/review": {
+      "post": {
+        "operationId": "reviewDecision",
+        "summary": "Approve or reject a versioned decision",
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/decision-contracts/{decision_id}/history": {
+      "get": {
+        "operationId": "getDecisionHistory",
+        "summary": "Read authorized decision versions",
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Version history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionVersion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/query": {
+      "post": {
+        "operationId": "queryEvidence",
+        "summary": "Ask a temporal question with scoped citations",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Answer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+      "/v1/ingestion-jobs/{job_id}": {
+        "get": {
+          "operationId": "getIngestionJob",
+          "summary": "Read tenant-scoped ingestion state",
+          "parameters": [
+            {
+              "name": "job_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/IngestionJob"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/drift-scans": {
+        "post": {
+          "operationId": "startDriftScan",
+          "summary": "Queue a bounded drift scan",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftScanRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "202": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/DriftScan"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/drift-findings": {
+        "get": {
+          "operationId": "listDriftFindings",
+          "summary": "List authorized reviewable drift findings",
+          "parameters": [
+            {
+              "name": "cursor",
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Findings",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DriftFinding"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/evaluations": {
+        "post": {
+          "operationId": "startEvaluation",
+          "summary": "Queue evaluation against a pinned corpus manifest",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "202": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EvaluationRun"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Problem response",
+              "content": {
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Problem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    "/v1/answers/{answer_id}": {
+      "get": {
+        "operationId": "getAnswer",
+        "summary": "Read an authorized stored answer",
+        "parameters": [
+          {
+            "name": "answer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Answer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+        "IngestionJob": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "job_id",
+            "source_version_id",
+            "status"
+          ],
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "source_version_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "received",
+                "validated",
+                "stored",
+                "parsed",
+                "chunked",
+                "embedded",
+                "linked",
+                "review_required",
+                "ready",
+                "failed",
+                "quarantined",
+                "deleted"
+              ]
+            },
+            "failure_code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "DriftScanRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision_version_ids"
+          ],
+          "properties": {
+            "decision_version_ids": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        },
+        "DriftScan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scan_id",
+            "status"
+          ],
+          "properties": {
+            "scan_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "running",
+                "completed",
+                "failed"
+              ]
+            }
+          }
+        },
+        "DriftFinding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "finding_id",
+            "decision_version_id",
+            "evidence_version_id",
+            "kind",
+            "status"
+          ],
+          "properties": {
+            "finding_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "decision_version_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "evidence_version_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "stale_test",
+                "unimplemented_decision",
+                "expired_assumption",
+                "contradiction"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "dismissed",
+                "resolved"
+              ]
+            }
+          }
+        },
+        "EvaluationRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "corpus_manifest_sha256",
+            "pipeline_version"
+          ],
+          "properties": {
+            "corpus_manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "pipeline_version": {
+              "type": "string"
+            }
+          }
+        },
+        "EvaluationRun": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "evaluation_id",
+            "status",
+            "corpus_manifest_sha256"
+          ],
+          "properties": {
+            "evaluation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "running",
+                "completed",
+                "failed"
+              ]
+            },
+            "corpus_manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "request_id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "SourceCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "origin",
+          "content",
+          "valid_from",
+          "permissions"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "markdown",
+              "transcript",
+              "json"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 1000000
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "permissions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "owner",
+                "engineer",
+                "qa",
+                "auditor",
+                "viewer"
+              ]
+            }
+          }
+        }
+      },
+      "SourceVersion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "version_id",
+          "version",
+          "kind",
+          "sha256",
+          "recorded_at",
+          "status"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received",
+              "review_required",
+              "ready",
+              "revoked",
+              "failed"
+            ]
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "content": {
+            "type": "string",
+            "description": "Returned only to an authorized reader."
+          }
+        }
+      },
+      "DecisionDraft": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "valid_from",
+          "evidence_version_ids",
+          "owner_id"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "evidence_version_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supersedes_decision_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "DecisionVersion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision_id",
+          "version_id",
+          "version",
+          "status",
+          "valid_from",
+          "recorded_at",
+          "evidence_version_ids"
+        ],
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in_review",
+              "approved",
+              "rejected",
+              "superseded"
+            ]
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "approver_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "evidence_version_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "etag": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewAction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "reject"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "recorded_as_of"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2000
+          },
+          "valid_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "recorded_as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "answer_mode": {
+            "type": "string",
+            "enum": [
+              "structured",
+              "generated"
+            ],
+            "default": "structured"
+          }
+        }
+      },
+      "Citation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "version_id",
+          "section_id",
+          "label"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "section_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "Claim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "citations"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          }
+        }
+      },
+      "Answer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "answer_id",
+          "status",
+          "claims",
+          "corpus_or_index_version",
+          "recorded_as_of"
+        ],
+        "properties": {
+          "answer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "answered",
+              "conflict",
+              "abstain",
+              "denied"
+            ]
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Claim"
+            }
+          },
+          "conflict_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "abstention_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "corpus_or_index_version": {
+            "type": "string"
+          },
+          "recorded_as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "valid_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "pipeline_versions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

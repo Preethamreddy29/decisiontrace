@@ -1,0 +1,11 @@
+{
+  "corpus_version": "dt-synthetic-v0.1",
+  "gold_version": "dt-gold-v0.1",
+  "license": "MIT",
+  "source_versions": 14,
+  "gold_cases": 25,
+  "files": {
+    "sources.json": "bc8ed1deb134c51e9c563532a25f8d21fd7c9a0ee964c8b6ad20ffc3d7d8b8a7",
+    "gold.json": "b9b12d40bcd4ba2ad3df86a3f0e2421de7b9e2d93e928e714ee94aa21c424f96"
+  }
+}

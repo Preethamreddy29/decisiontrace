@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/decisiontrace/events/v1.schema.json",
+  "title": "DecisionTrace outbox event v1",
+  "description": "Draft internal event contract. Tenant identity is assigned by the server.",
+  "oneOf": [
+    {"$ref": "#/$defs/decisionApproved"},
+    {"$ref": "#/$defs/sourceRevoked"}
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["event_id", "event_version", "tenant_id", "occurred_at", "subject_id", "event_type", "payload"],
+      "properties": {
+        "event_id": {"type": "string", "format": "uuid"},
+        "event_version": {"const": 1},
+        "tenant_id": {"type": "string", "format": "uuid"},
+        "occurred_at": {"type": "string", "format": "date-time"},
+        "subject_id": {"type": "string", "format": "uuid"}
+      }
+    },
+    "decisionApproved": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["event_id", "event_version", "tenant_id", "occurred_at", "subject_id", "event_type", "payload"],
+          "properties": {
+            "event_id": {"type": "string", "format": "uuid"}, "event_version": {"const": 1},
+            "tenant_id": {"type": "string", "format": "uuid"}, "occurred_at": {"type": "string", "format": "date-time"},
+            "subject_id": {"type": "string", "format": "uuid"}, "event_type": {"const": "decision.approved"},
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["decision_id", "version_id", "valid_from", "evidence_version_ids"],
+              "properties": {
+                "decision_id": {"type": "string", "format": "uuid"},
+                "version_id": {"type": "string", "format": "uuid"},
+                "valid_from": {"type": "string", "format": "date"},
+                "evidence_version_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "format": "uuid"}}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sourceRevoked": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["event_id", "event_version", "tenant_id", "occurred_at", "subject_id", "event_type", "payload"],
+          "properties": {
+            "event_id": {"type": "string", "format": "uuid"}, "event_version": {"const": 1},
+            "tenant_id": {"type": "string", "format": "uuid"}, "occurred_at": {"type": "string", "format": "date-time"},
+            "subject_id": {"type": "string", "format": "uuid"}, "event_type": {"const": "source.revoked"},
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["source_id", "version_id", "revoked_at"],
+              "properties": {
+                "source_id": {"type": "string", "format": "uuid"},
+                "version_id": {"type": "string", "format": "uuid"},
+                "revoked_at": {"type": "string", "format": "date-time"}
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
