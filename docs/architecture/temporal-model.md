@@ -28,4 +28,4 @@ No client-supplied tenant ID alone grants access. No direct access to RuleTwin's
 
 ## Design work still required
 
-The conceptual ERD and state machines are in `data-model.md`, and planned adversarial checks are in `../security/threat-to-test.md`. Migrations, versioned API/event contracts, concrete deletion/retention policy, and ADR review remain Phase 1 work. These drafts do not claim the gate has passed.
+The conceptual ERD and state machines are in `data-model.md`, and planned adversarial checks are in `../security/threat-to-test.md`. The Phase 1 design gate is recorded in `../release/phase1-design-gate.md`; runtime controls and the historical answer workflow still require implementation evidence.

@@ -4,7 +4,7 @@ DecisionTrace is a local-first product for reconstructing *why* a product decisi
 
 ## Current status
 
-Phase 0's synthetic corpus gate and the Phase 1 design gate are complete. Phase 2 local engineering foundation is in progress: the API, database, worker, and readiness web shell now start locally. The historical answer workflow, model, product demo, and RuleTwin integration do not exist yet. The separate RuleTwin project is being developed in parallel.
+Phase 0's synthetic corpus gate, the Phase 1 design gate, and the Phase 2 local foundation gate are complete. The API, database, worker, and readiness web shell start locally and passed a clean GitHub Actions run. The historical answer workflow, model, product demo, and RuleTwin integration do not exist yet. The separate RuleTwin project is being developed in parallel.
 
 The first standalone demo will answer a historical decision question, distinguish a correction from a superseding decision, display exact source citations, and abstain when evidence is missing. RuleTwin integration follows a stable, versioned evidence contract and a consumer test.
 

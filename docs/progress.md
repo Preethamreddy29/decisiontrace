@@ -1,7 +1,7 @@
 # Progress
 
 **As of:** 2026-10-24
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation in progress
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; Phase 3 pending
 
 ## 2026-10-24 continuation
 
@@ -14,18 +14,18 @@
 - `npm run build` and `python tools/check_all.py` pass. `docker compose --env-file .env.example up --build -d` starts the local stack; API and PostgreSQL report healthy; the web page and its API proxy return HTTP 200.
 - Seeded the fictional corpus twice without duplicates. `python -m api.app.smoke` in the API container passes with 2 tenants, 14 source versions, 1 migration, and a worker-delivered outbox ping.
 - Verified an unknown API route returns a problem JSON 404 with a request ID. Stopping PostgreSQL made readiness return problem JSON 503; restarting it restored HTTP 200.
-- Added a CI workflow, but it has **not run on GitHub** because these files have not been committed or pushed.
+- Committed and pushed the foundation at `b52ffaf`. Its clean GitHub Actions run passed all foundation steps; see `docs/release/phase2-foundation-gate.md`.
 
 ## Current open work
 
-- Phase 2 full gate remains open until CI passes from a clean runner and the clean-clone process is recorded. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
+- Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
 - No product source-ingestion, approval, retrieval, answer, citation, deletion, or drift endpoint is implemented. The OpenAPI contract documents intended behavior only.
 - No model, evaluator, 100-question set, security/failure suite, RuleTwin connector, or runnable DecisionTrace product demo exists.
-- All new work is local and uncommitted; GitHub remains unchanged.
+- Phase 3's historical cited-answer workflow remains the next product milestone.
 
 ## Next checkpoint
 
-Complete the Phase 2 CI/clean-clone gate, then build the Phase 3 one-tenant temporal cited-answer slice against the frozen 25-case seed corpus. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Build the Phase 3 one-tenant temporal cited-answer slice against the frozen 25-case seed corpus. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 

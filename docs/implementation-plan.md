@@ -6,7 +6,7 @@
 |---|---|---|
 | Phase 0: product and corpus — passed | Charter, synthetic six-month history, 25 labeled seed questions, corpus manifest and MIT license | `python tools/validate_corpus.py` validates 14 source versions, 25 labels, permission/temporal references, and SHA-256 manifest. No model results claimed. |
 | Phase 1: contracts and threats — design gate passed | Temporal invariants, conceptual ERD, versioned API/event schemas, permission/deletion model, ten ADRs, threat-to-test map | See `docs/release/phase1-design-gate.md`. Contracts validate; implementation tests remain pending. |
-| Phase 2: local foundation — in progress | Separate API/web/worker/database, migrations, seed loader, checks, local startup | Local Docker smoke, web build, readiness failure/recovery, and worker ping pass. Clean GitHub CI and clean-clone evidence remain pending. |
+| Phase 2: local foundation — passed | Separate API/web/worker/database, migrations, seed loader, checks, local startup | Local Docker smoke, web build, readiness failure/recovery, and worker ping pass. Clean GitHub CI and checkout evidence are recorded in `docs/release/phase2-foundation-gate.md`. |
 | Phase 3: standalone demo | One-tenant temporal cited-answer slice, correction, supersession, 25 evaluated questions | Historical/current answers differ correctly; citations open; missing evidence abstains; repeatable demo. |
 | Phase 4–6: v1 breadth and hardening | More source types, two-tenant permissions, drift, 100+ gold set, failure/security/evaluation | Permission, citation, temporal, abstention, and injection gates pass on versioned fixtures. |
 | Phase 7–9: release and proof | Restore/reindex, rollback, exact release smoke, tagged local v1, demo/case study | Release evidence is reproducible on named hardware. |
@@ -17,4 +17,4 @@ The portfolio's original sequence deferred DecisionTrace until RuleTwin v1. The 
 
 ## Next work
 
-Complete Phase 1 data/API/threat contracts and ADRs before treating runtime behavior as authoritative. Progress and open gaps are tracked in `docs/progress.md`.
+Build the Phase 3 standalone one-tenant temporal cited-answer slice, then evaluate its 25 seed questions. Progress and open gaps are tracked in `docs/progress.md`.
