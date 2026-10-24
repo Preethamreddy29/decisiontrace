@@ -4,7 +4,7 @@ DecisionTrace is a local-first product for reconstructing *why* a product decisi
 
 ## Current status
 
-Phase 0's synthetic corpus gate, the Phase 1 design gate, and the Phase 2 local foundation gate are complete. A curated Phase 3 synthetic demo now shows historical and corrected answers with inspectable source versions. Its 25 seed prompts pass status and citation checks locally. The full Phase 3 product gate, general question answering, production authorization, model, and RuleTwin integration remain open. The separate RuleTwin project is being developed in parallel.
+Phase 0's synthetic corpus gate, the Phase 1 design gate, and the Phase 2 local foundation gate are complete. A curated Phase 3 synthetic demo now shows historical and corrected answers with inspectable source versions. Its 25 seed prompts pass status and citation checks locally and in GitHub CI. The full Phase 3 product gate, general question answering, production authorization, model, and RuleTwin integration remain open. The separate RuleTwin project is being developed in parallel.
 
 The first standalone demo answers curated historical decision questions, distinguishes a correction from a superseding decision, displays versioned source citations, and abstains when evidence is missing. It is deterministic and limited to the frozen fictional corpus; its 25 seed prompts are not an independent holdout. RuleTwin integration follows a stable, versioned evidence contract and a consumer test.
 
