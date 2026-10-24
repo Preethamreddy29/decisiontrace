@@ -1,6 +1,6 @@
 # Governed Demo v0.3
 
-**State:** locally implemented and verified on 2026-10-24. The full Phase 3 product gate remains open.
+**State:** locally implemented and verified on 2026-10-24. [GitHub CI passed](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40113083114). The full Phase 3 product gate remains open.
 
 ## Demo path
 
@@ -20,3 +20,12 @@ At `http://127.0.0.1:5174`, sign in as **Cedar author / auditor** with the publi
 ## Remaining limits
 
 Intake is bounded text through a form, not file/connector ingestion or structure-aware chunking. The decision statement is entered by a person; there is no extraction model. The resolver supports a bounded fictional manual-override domain. Credentials are shared synthetic demo credentials, not production identity. Independent human-reviewed answer evaluation, 100+ gold cases, deletion/retention, full failure and threat suites, general retrieval, and RuleTwin integration remain open.
+
+## Next steps
+
+1. **v0.4 — evaluation-ready evidence.** Add structure-aware source sections with stable IDs and exact passage retrieval, then broaden the fictional corpus beyond the current manual-override examples. Preserve version, recorded-time, permission, and citation behavior through corrections. The gate is a clean-start demo and checks that every returned citation resolves to the exact authorized source version and section.
+2. **v0.5 — Phase 3 product gate.** Replace shared demo identities with production-capable authentication and tenant authorization. Freeze an independently reviewed answer holdout covering current and historical questions, corrected sources, permission denial, unsupported questions, and answerable cases. Publish reproducible citation, temporal, permission, and abstention results with failure examples. Close the gate only when the identity, ingestion, and evaluation evidence is recorded; seed prompts and paraphrases remain regression checks.
+3. **Phases 4–6 — v1 breadth and hardening.** Expand source types and two-tenant behavior, reach the planned 100+ reviewed gold questions, and implement drift, source retention/deletion, audit and outbox delivery/replay, recovery, and the remaining failure and threat tests. Record the permission, citation, temporal, abstention, and injection gates on versioned fixtures.
+4. **RuleTwin connection.** Agree on a versioned evidence contract, sample fixtures, tenant/authentication semantics, and consumer contract tests with RuleTwin. Integrate through that interface after both sides pass the contract tests; keep the standalone DecisionTrace demo runnable.
+
+The immediate next build is **v0.4**. The phase status and open gaps remain tracked in [the implementation plan](../implementation-plan.md) and [progress log](../progress.md).
