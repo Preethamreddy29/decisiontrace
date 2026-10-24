@@ -28,6 +28,7 @@ class Actor:
 
 ACCOUNTS = {
     "cedar_auditor": Actor("cedar_auditor", "cedar", "auditor"),
+    "cedar_reviewer": Actor("cedar_reviewer", "cedar", "auditor"),
     "cedar_viewer": Actor("cedar_viewer", "cedar", "viewer"),
     "lumen_auditor": Actor("lumen_auditor", "lumen", "auditor"),
 }

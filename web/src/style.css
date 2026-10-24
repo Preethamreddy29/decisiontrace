@@ -24,4 +24,18 @@ button:hover { background: #0b2a54; } button:disabled { opacity: .6; cursor: not
 blockquote { border-left: 3px solid #9fb9db; margin: 14px 0 0; padding: 4px 0 4px 13px; color: #536275; line-height: 1.5; }
 .source-detail { background: #f5f8fc; border-radius: 9px; margin-top: 14px; padding: 16px; overflow-wrap: anywhere; } .source-detail p { line-height: 1.55; } mark { background: #fff1a8; }
 code { background: #eaf0f8; padding: 2px 5px; border-radius: 4px; }
-@media (max-width: 680px) { .login-form, .time-grid { grid-template-columns: 1fr; } .identity, .result-head { align-items: flex-start; flex-direction: column; } }
+.workflow-heading, .decision-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.workflow-heading h2 { margin: 7px 0 0; } .workflow-heading .badge { white-space: nowrap; }
+.workflow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 25px; }
+.workflow-step { border: 1px solid #dfe6f0; border-radius: 13px; padding: 20px; min-width: 0; }
+.workflow-step h3 { font-size: 1.12rem; margin: 9px 0 19px; }
+.step-number { background: #dce9f8; color: #173d74; border-radius: 50%; width: 29px; height: 29px; display: inline-grid; place-items: center; font-weight: 800; }
+.workflow-form { display: grid; gap: 14px; margin-top: 14px; } .button-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 14px; }
+.workflow-step > label { margin-bottom: 15px; } .workflow-step > .muted { margin: 12px 0; }
+.history { border-top: 1px solid #e2e9f1; margin-top: 20px; padding-top: 17px; } .history > strong { font-size: .9rem; }
+.history-item { background: #f5f8fc; border: 1px solid #e2e9f1; border-radius: 9px; padding: 13px; margin-top: 10px; overflow-wrap: anywhere; }
+.history-item p { margin: 9px 0; line-height: 1.5; } .history-item small { display: block; }
+.version-list { margin-top: 12px; border-top: 1px solid #dce6f1; } .version-list p { border-bottom: 1px solid #dce6f1; padding: 8px 0; } .version-list small { margin-top: 3px; }
+.badge.draft { background: #fff2e3; color: #a05b1b; } .badge.rejected { background: #fff0ed; color: #a34435; }
+.success { color: #17664e; background: #e8f6ee; border-radius: 9px; padding: 13px; margin-top: 18px; }
+@media (max-width: 680px) { .login-form, .time-grid, .workflow-grid { grid-template-columns: 1fr; } .identity, .result-head, .workflow-heading { align-items: flex-start; flex-direction: column; } }

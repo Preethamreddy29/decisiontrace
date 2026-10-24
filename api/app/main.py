@@ -14,6 +14,11 @@ from .config import Settings, load_settings
 from .db import is_ready
 from .auth import ACCOUNTS, Actor, LoginRequest, issue_token, load_demo_credentials, require_actor
 from .query import QueryRequest, open_evidence, query_with_idempotency
+from .workflow import (
+    DecisionDraft, ReviewAction, SourceCreate, append_source, create_decision,
+    create_source, decision_history, list_decisions, list_sources,
+    review_decision, source_history,
+)
 
 
 @asynccontextmanager
@@ -23,7 +28,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="DecisionTrace foundation", version="0.1.0-dev", lifespan=lifespan)
+app = FastAPI(title="DecisionTrace local demo", version="0.3.0-demo", lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -78,7 +83,7 @@ def ready(request: Request):
 
 @app.get("/version")
 def version():
-    return {"service": "decisiontrace", "version": "0.1.0-dev", "product_ready": False}
+    return {"service": "decisiontrace", "version": "0.3.0-demo", "product_ready": False}
 
 
 @app.get("/demo/accounts")
@@ -101,6 +106,64 @@ def demo_login(login: LoginRequest, request: Request):
 @app.get("/demo/session")
 def demo_session(actor: Actor = Depends(require_actor)):
     return {"account": actor.account, "tenant": actor.tenant, "role": actor.role}
+
+
+@app.get("/v1/sources")
+def get_sources(request: Request, actor: Actor = Depends(require_actor)):
+    return list_sources(request.app.state.settings.database_url, actor)
+
+
+@app.post("/v1/sources", status_code=201)
+def post_source(
+    body: SourceCreate, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    actor: Actor = Depends(require_actor),
+):
+    return create_source(request.app.state.settings.database_url, actor, body, idempotency_key)
+
+
+@app.get("/v1/sources/{source_id}/versions")
+def get_source_history(source_id: UUID, request: Request, actor: Actor = Depends(require_actor)):
+    return source_history(request.app.state.settings.database_url, actor, source_id)
+
+
+@app.post("/v1/sources/{source_id}/versions", status_code=201)
+def post_source_version(
+    source_id: UUID, body: SourceCreate, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    if_match: str = Header(alias="If-Match"),
+    actor: Actor = Depends(require_actor),
+):
+    return append_source(request.app.state.settings.database_url, actor, source_id, body, if_match, idempotency_key)
+
+
+@app.get("/v1/decision-contracts")
+def get_decisions(request: Request, actor: Actor = Depends(require_actor)):
+    return list_decisions(request.app.state.settings.database_url, actor)
+
+
+@app.post("/v1/decision-contracts", status_code=201)
+def post_decision(
+    body: DecisionDraft, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    actor: Actor = Depends(require_actor),
+):
+    return create_decision(request.app.state.settings.database_url, actor, body, idempotency_key)
+
+
+@app.post("/v1/decision-contracts/{decision_id}/review")
+def post_decision_review(
+    decision_id: UUID, body: ReviewAction, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    if_match: str = Header(alias="If-Match"),
+    actor: Actor = Depends(require_actor),
+):
+    return review_decision(request.app.state.settings.database_url, actor, decision_id, body, if_match, idempotency_key)
+
+
+@app.get("/v1/decision-contracts/{decision_id}/history")
+def get_decision_history(decision_id: UUID, request: Request, actor: Actor = Depends(require_actor)):
+    return decision_history(request.app.state.settings.database_url, actor, decision_id)
 
 
 @app.post("/v1/query")

@@ -92,11 +92,11 @@ def _sentence(source: Source, *required: str) -> str | None:
     return None
 
 
-def _claim(source: Source, sentence: str) -> dict:
+def _claim(source: Source, sentence: str, decision_version_id: str | None = None) -> dict:
     start = source.content.find(sentence)
     if start < 0:
         raise RuntimeError("citation quote is not in its source version")
-    return {
+    result = {
         "text": sentence,
         "citations": [{
             "source_id": source.source_id, "version_id": source.version_id,
@@ -104,6 +104,24 @@ def _claim(source: Source, sentence: str) -> dict:
             "start_char": start, "end_char": start + len(sentence),
         }],
     }
+    if decision_version_id:
+        result["decision_version_id"] = decision_version_id
+    return result
+
+
+def _approved_policy(database_url: str, actor: Actor, valid_on: date, as_of: datetime):
+    """Return the newest reviewed manual-override decision, if one existed then."""
+    with connect(database_url) as connection:
+        return connection.execute(
+            "SELECT d.id, d.evidence_version_ids FROM decision_versions d WHERE d.tenant_id = %s "
+            "AND d.status = 'approved' AND d.valid_from <= %s AND (d.valid_to IS NULL OR d.valid_to > %s) "
+            "AND d.recorded_at <= %s AND d.title ILIKE %s "
+            "AND NOT EXISTS (SELECT 1 FROM unnest(d.evidence_version_ids) evidence(id) "
+            "WHERE NOT EXISTS (SELECT 1 FROM source_versions s WHERE s.id = evidence.id "
+            "AND s.tenant_id = d.tenant_id AND %s = ANY(s.roles) AND s.revoked_at IS NULL)) "
+            "ORDER BY d.valid_from DESC, d.recorded_at DESC LIMIT 1",
+            (stable_id(f"tenant/{actor.tenant}"), valid_on, valid_on, as_of, "%manual override%", actor.role),
+        ).fetchone()
 
 
 def _policy(sources: list[Source], valid_on: date, as_of: datetime) -> Source | None:
@@ -179,11 +197,22 @@ def resolve(database_url: str, actor: Actor, query: QueryRequest) -> dict:
             if quote:
                 claims = [_claim(decision, quote)]
     elif terms & {"override", "overrides", "reviewer", "reviewers", "signoff", "signoffs"} or "sign off" in question or "manual adjustment" in question:
-        policy = _policy(sources, valid_on, query.recorded_as_of)
-        if policy:
-            quote = _sentence(policy, "manual override")
-            if quote:
-                claims = [_claim(policy, quote)]
+        reviewed = _approved_policy(database_url, actor, valid_on, query.recorded_as_of)
+        if reviewed:
+            matching = [source for source in sources if UUID(source.version_id) in reviewed[1]]
+            if len(matching) != len(reviewed[1]):
+                return _empty("abstain", "The approved decision's exact evidence is no longer available.", query, valid_on)
+            policy = next((source for source in matching if "manual override" in source.content.lower()), None)
+            if policy:
+                quote = _sentence(policy, "manual override")
+                if quote:
+                    claims = [_claim(policy, quote, str(reviewed[0]))]
+        else:
+            policy = _policy(sources, valid_on, query.recorded_as_of)
+            if policy:
+                quote = _sentence(policy, "manual override")
+                if quote:
+                    claims = [_claim(policy, quote)]
 
     if not claims:
         return _empty("abstain", "No permitted source version supports this question at the selected times.", query, valid_on)

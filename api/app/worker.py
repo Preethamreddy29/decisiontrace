@@ -1,4 +1,4 @@
-"""Lease-based outbox skeleton; only foundation ping events are handled."""
+"""Lease-based local outbox delivery for foundation and demo audit events."""
 
 import logging
 import time
@@ -29,7 +29,8 @@ def claim_once(database_url: str):
 
 
 def finish(database_url: str, event_id, event_type: str) -> None:
-    state = "done" if event_type == "foundation.ping" else "dead_letter"
+    supported = {"foundation.ping", "source.created", "source.versioned", "decision.drafted", "decision.reviewed"}
+    state = "done" if event_type in supported else "dead_letter"
     with connect(database_url) as connection:
         connection.execute(
             "UPDATE outbox_events SET state = %s, lease_until = NULL "

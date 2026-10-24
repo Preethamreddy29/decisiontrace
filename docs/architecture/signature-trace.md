@@ -1,10 +1,10 @@
 # Signature Workflow Trace — Design
 
-**Status:** planned UI-to-data path, not an implemented flow.
+**Status:** the local text-source, draft/review, query, and citation path is implemented for the bounded synthetic v0.3 demo. The broader contract remains a design target.
 
 | User step | Contract | Data and control | Required check |
 |---|---|---|---|
-| Upload fictional meeting record | `POST /v1/sources` with idempotency key | Authenticate, derive tenant, validate type/size/checksum, append `source_version` and outbox event | Duplicate request yields one logical version; wrong tenant cannot select scope. |
+| Add fictional text source | `POST /v1/sources` with idempotency key | Authenticate, derive tenant, validate type/size/checksum, append `source_version` and outbox event | Duplicate request yields one logical version; wrong tenant cannot select scope. |
 | Review extracted decision | `POST /v1/decision-contracts`, then `/review` with `If-Match` | Candidate stays draft; independent approver binds exact evidence-version IDs | Draft cannot answer as approved; stale/self approval fails. |
 | Ask 10 May valid-time question | `POST /v1/query` with `valid_on=2026-05-10` and current recorded cutoff | Permission filter, valid-time filter, approved contract, corrected meeting version | Answer cites exact corrected source and policy version. |
 | Ask what was known on 10 May | Same endpoint with `recorded_as_of=2026-05-10T23:59:59Z` | Retrieval cannot see 12 May correction or approved record | Answer shows the original one-reviewer transcript with correction caveat in later review. |

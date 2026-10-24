@@ -16,10 +16,10 @@ def smoke() -> None:
     with connect(database_url) as connection:
         tenants = connection.execute("SELECT count(*) FROM tenants").fetchone()[0]
         sources = connection.execute("SELECT count(*) FROM source_versions").fetchone()[0]
-        labeled = connection.execute("SELECT count(*) FROM source_versions WHERE external_label IS NOT NULL").fetchone()[0]
+        seeded = connection.execute("SELECT count(*) FROM source_versions WHERE external_label LIKE 'SRC-%'").fetchone()[0]
         migrations = connection.execute("SELECT count(*) FROM schema_migrations").fetchone()[0]
-        if (tenants, sources, labeled, migrations) != (2, 14, 14, 2):
-            raise RuntimeError(f"unexpected foundation counts: {(tenants, sources, labeled, migrations)}")
+        if tenants != 2 or sources < 14 or seeded != 14 or migrations != 3:
+            raise RuntimeError(f"unexpected foundation counts: {(tenants, sources, seeded, migrations)}")
         event_id = uuid4()
         connection.execute(
             "INSERT INTO outbox_events (id, tenant_id, event_type, payload) "
@@ -33,7 +33,7 @@ def smoke() -> None:
                 "SELECT state FROM outbox_events WHERE id = %s", (event_id,)
             ).fetchone()[0]
         if state == "done":
-            print("Foundation smoke passed: 2 tenants, 14 labeled source versions, 2 migrations, worker delivery.")
+            print("Foundation smoke passed: 2 tenants, 14 seeded source versions, 3 migrations, worker delivery.")
             return
         if state == "dead_letter":
             raise RuntimeError("foundation ping was rejected by worker")

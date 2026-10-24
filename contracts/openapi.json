@@ -3,7 +3,7 @@
   "info": {
     "title": "DecisionTrace first-slice API",
     "version": "0.1.0",
-    "description": "Partial local contract. The structured /v1/query and exact source-version GET are implemented for the synthetic v0.2 demo; other operations remain planned. Tenant and role are derived from a server-verified demo bearer token."
+    "description": "Partial local contract. The synthetic v0.3 demo implements governed text-source versioning, decision draft/review/history, structured query, and exact source opening. Other operations remain planned. Tenant and role come from a server-verified demo token."
   },
   "servers": [
     {
@@ -104,105 +104,173 @@
             }
           }
         }
-      }
-    },
-      "/v1/sources/{source_id}/versions": {
-        "post": {
-          "operationId": "appendSourceVersion",
-          "summary": "Append a corrected or updated source version",
-          "parameters": [
-            {
-              "name": "source_id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              }
-            },
-            {
-              "name": "Idempotency-Key",
-              "in": "header",
-              "required": true,
-              "schema": {
-                "type": "string",
-                "minLength": 8,
-                "maxLength": 128
-              }
-            },
-            {
-              "name": "If-Match",
-              "in": "header",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
-            "required": true,
+      },
+      "get": {
+        "operationId": "listGovernedSources",
+        "summary": "List current authorized demo sources",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authorized version list",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SourceCreate"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "New immutable source version",
-              "content": {
-                "application/json": {
-                  "schema": {
+                  "type": "array",
+                  "items": {
                     "$ref": "#/components/schemas/SourceVersion"
                   }
                 }
               }
-            },
-            "401": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
+            }
+          },
+          "401": {
+            "description": "Demo session required"
+          },
+          "403": {
+            "description": "Role not permitted"
+          },
+          "404": {
+            "description": "Resource not found"
+          }
+        }
+      }
+    },
+    "/v1/sources/{source_id}/versions": {
+      "post": {
+        "operationId": "appendSourceVersion",
+        "summary": "Append a corrected or updated source version",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New immutable source version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceVersion"
                 }
               }
-            },
-            "403": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
-            },
-            "409": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
-            },
-            "422": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
+            }
+          },
+          "409": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           }
         }
       },
+      "get": {
+        "operationId": "getSourceHistory",
+        "summary": "Read authorized immutable source versions",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized version list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceVersion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Demo session required"
+          },
+          "403": {
+            "description": "Role not permitted"
+          },
+          "404": {
+            "description": "Resource not found"
+          }
+        }
+      }
+    },
     "/v1/sources/{source_id}/versions/{version_id}": {
       "get": {
         "operationId": "getSourceVersion",
@@ -433,6 +501,35 @@
                 }
               }
             }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listDecisionContracts",
+        "summary": "List latest tenant-scoped decision versions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authorized version list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionVersion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Demo session required"
+          },
+          "403": {
+            "description": "Role not permitted"
+          },
+          "404": {
+            "description": "Resource not found"
           }
         }
       }
@@ -686,240 +783,240 @@
         }
       }
     },
-      "/v1/ingestion-jobs/{job_id}": {
-        "get": {
-          "operationId": "getIngestionJob",
-          "summary": "Read tenant-scoped ingestion state",
-          "parameters": [
-            {
-              "name": "job_id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/IngestionJob"
-                  }
-                }
-              }
-            },
-            "401": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
+    "/v1/ingestion-jobs/{job_id}": {
+      "get": {
+        "operationId": "getIngestionJob",
+        "summary": "Read tenant-scoped ingestion state",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
-        }
-      },
-      "/v1/drift-scans": {
-        "post": {
-          "operationId": "startDriftScan",
-          "summary": "Queue a bounded drift scan",
-          "requestBody": {
-            "required": true,
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DriftScanRequest"
+                  "$ref": "#/components/schemas/IngestionJob"
                 }
               }
             }
           },
-          "responses": {
-            "202": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/DriftScan"
-                  }
-                }
-              }
-            },
-            "401": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/v1/drift-findings": {
-        "get": {
-          "operationId": "listDriftFindings",
-          "summary": "List authorized reviewable drift findings",
-          "parameters": [
-            {
-              "name": "cursor",
-              "in": "query",
-              "schema": {
-                "type": "string"
-              }
-            },
-            {
-              "name": "limit",
-              "in": "query",
-              "schema": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 100
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Findings",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/DriftFinding"
-                    }
-                  }
-                }
-              }
-            },
-            "401": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/v1/evaluations": {
-        "post": {
-          "operationId": "startEvaluation",
-          "summary": "Queue evaluation against a pinned corpus manifest",
-          "requestBody": {
-            "required": true,
+          "401": {
+            "description": "Problem response",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EvaluationRequest"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
-          "responses": {
-            "202": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/EvaluationRun"
-                  }
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
-            },
-            "401": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Problem response",
-              "content": {
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Problem"
-                  }
+            }
+          },
+          "404": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           }
         }
-      },
+      }
+    },
+    "/v1/drift-scans": {
+      "post": {
+        "operationId": "startDriftScan",
+        "summary": "Queue a bounded drift scan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriftScanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftScan"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drift-findings": {
+      "get": {
+        "operationId": "listDriftFindings",
+        "summary": "List authorized reviewable drift findings",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DriftFinding"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/evaluations": {
+      "post": {
+        "operationId": "startEvaluation",
+        "summary": "Queue evaluation against a pinned corpus manifest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRun"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/answers/{answer_id}": {
       "get": {
         "operationId": "getAnswer",
@@ -989,176 +1086,176 @@
       }
     },
     "schemas": {
-        "IngestionJob": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "job_id",
-            "source_version_id",
-            "status"
-          ],
-          "properties": {
-            "job_id": {
+      "IngestionJob": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "job_id",
+          "source_version_id",
+          "status"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received",
+              "validated",
+              "stored",
+              "parsed",
+              "chunked",
+              "embedded",
+              "linked",
+              "review_required",
+              "ready",
+              "failed",
+              "quarantined",
+              "deleted"
+            ]
+          },
+          "failure_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DriftScanRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision_version_ids"
+        ],
+        "properties": {
+          "decision_version_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "source_version_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "status": {
-              "type": "string",
-              "enum": [
-                "received",
-                "validated",
-                "stored",
-                "parsed",
-                "chunked",
-                "embedded",
-                "linked",
-                "review_required",
-                "ready",
-                "failed",
-                "quarantined",
-                "deleted"
-              ]
-            },
-            "failure_code": {
-              "type": [
-                "string",
-                "null"
-              ]
             }
           }
-        },
-        "DriftScanRequest": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "decision_version_ids"
-          ],
-          "properties": {
-            "decision_version_ids": {
-              "type": "array",
-              "minItems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "format": "uuid"
-              }
-            }
+        }
+      },
+      "DriftScan": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scan_id",
+          "status"
+        ],
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
           }
-        },
-        "DriftScan": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "scan_id",
-            "status"
-          ],
-          "properties": {
-            "scan_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "status": {
-              "type": "string",
-              "enum": [
-                "queued",
-                "running",
-                "completed",
-                "failed"
-              ]
-            }
+        }
+      },
+      "DriftFinding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_id",
+          "decision_version_id",
+          "evidence_version_id",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "decision_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "evidence_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "stale_test",
+              "unimplemented_decision",
+              "expired_assumption",
+              "contradiction"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "dismissed",
+              "resolved"
+            ]
           }
-        },
-        "DriftFinding": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "finding_id",
-            "decision_version_id",
-            "evidence_version_id",
-            "kind",
-            "status"
-          ],
-          "properties": {
-            "finding_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "decision_version_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "evidence_version_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "stale_test",
-                "unimplemented_decision",
-                "expired_assumption",
-                "contradiction"
-              ]
-            },
-            "status": {
-              "type": "string",
-              "enum": [
-                "open",
-                "dismissed",
-                "resolved"
-              ]
-            }
+        }
+      },
+      "EvaluationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "corpus_manifest_sha256",
+          "pipeline_version"
+        ],
+        "properties": {
+          "corpus_manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "pipeline_version": {
+            "type": "string"
           }
-        },
-        "EvaluationRequest": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "corpus_manifest_sha256",
-            "pipeline_version"
-          ],
-          "properties": {
-            "corpus_manifest_sha256": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
-            },
-            "pipeline_version": {
-              "type": "string"
-            }
+        }
+      },
+      "EvaluationRun": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evaluation_id",
+          "status",
+          "corpus_manifest_sha256"
+        ],
+        "properties": {
+          "evaluation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "corpus_manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
           }
-        },
-        "EvaluationRun": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "evaluation_id",
-            "status",
-            "corpus_manifest_sha256"
-          ],
-          "properties": {
-            "evaluation_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "status": {
-              "type": "string",
-              "enum": [
-                "queued",
-                "running",
-                "completed",
-                "failed"
-              ]
-            },
-            "corpus_manifest_sha256": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
-            }
-          }
-        },
+        }
+      },
       "Problem": {
         "type": "object",
         "additionalProperties": false,
@@ -1212,11 +1309,13 @@
           },
           "origin": {
             "type": "string",
-            "maxLength": 500
+            "maxLength": 500,
+            "minLength": 3
           },
           "content": {
             "type": "string",
-            "maxLength": 1000000
+            "maxLength": 10000,
+            "minLength": 15
           },
           "valid_from": {
             "type": "string",
@@ -1241,7 +1340,9 @@
                 "auditor",
                 "viewer"
               ]
-            }
+            },
+            "maxItems": 5,
+            "uniqueItems": true
           }
         }
       },
@@ -1315,6 +1416,34 @@
           "content": {
             "type": "string",
             "description": "Returned only to an authorized reader."
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "superseded_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string"
           }
         }
       },
@@ -1324,13 +1453,13 @@
         "required": [
           "title",
           "valid_from",
-          "evidence_version_ids",
-          "owner_id"
+          "evidence_version_ids"
         ],
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 300
+            "maxLength": 300,
+            "minLength": 8
           },
           "valid_from": {
             "type": "string",
@@ -1350,11 +1479,8 @@
             "items": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid"
+            },
+            "maxItems": 10
           },
           "supersedes_decision_id": {
             "type": [
@@ -1375,7 +1501,10 @@
           "status",
           "valid_from",
           "recorded_at",
-          "evidence_version_ids"
+          "evidence_version_ids",
+          "owner_id",
+          "title",
+          "etag"
         ],
         "properties": {
           "decision_id": {
@@ -1435,6 +1564,16 @@
           },
           "etag": {
             "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "supersedes_decision_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -1558,6 +1697,10 @@
             "items": {
               "$ref": "#/components/schemas/Citation"
             }
+          },
+          "decision_version_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

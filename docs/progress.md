@@ -1,7 +1,15 @@
 # Progress
 
 **As of:** 2026-10-24
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; interactive v0.2 demo locally verified; full Phase 3 product gate open
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; governed interactive v0.3 demo locally verified; full Phase 3 product gate open
+
+## 2026-10-24 governed v0.3 workflow
+
+- Added a third checksummed migration for authored source origin/lineage, decision title/supersession reference, and mutation idempotency. Source text intake records checksum, tenant, permission scope, origin, valid and recorded time; corrected versions preserve the earlier source and its history.
+- Added server-derived authorship and independent auditor review. Draft, approval, and rejection are immutable decision versions; stale ETags, self approval, cross-tenant access, and superseded evidence are rejected. Protected mutations write audit and local outbox events in the same transaction.
+- Approved decisions can supply an exact source-sentence answer. Drafts do not become authority. A later source correction makes the approved decision's old evidence unavailable to a current query, while a query at the earlier recorded cutoff can still inspect it.
+- The UI now provides source creation/correction, source history, decision draft/review, identity switching, and an approved answer with the exact source passage. Browser review completed the author-to-reviewer-to-answer flow and confirmed self approval is blocked.
+- The live v0.3 check covers versioning, idempotency, review separation, historical answers, stale evidence, tenant/role controls, and audit/outbox pairing. Existing 25 seed prompts and 14 v0.2 paraphrases still pass. See `docs/release/v03-governed-workflow.md` for scope and limits.
 
 ## 2026-10-24 interactive v0.2
 
@@ -29,13 +37,13 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- `/v1/query` and exact source GET are implemented for the bounded synthetic demo; governed source ingestion, decision review/approval, deletion, and most other planned OpenAPI operations remain open.
+- `/v1/query`, governed local text-source versions, decision review/history, and exact source GET are implemented for the bounded synthetic demo. File connectors, structured chunking, deletion, drift/evaluation operations, and other planned API operations remain open.
 - No production identity, model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
-- The remaining Phase 3 product work is governed source/decision lifecycle and broader independently reviewed answer evaluation.
+- The remaining Phase 3 product work is broader independently reviewed answer evaluation, production identity, and the ingestion/security depth needed for a product gate.
 
 ## Next checkpoint
 
-Complete the governed source/decision lifecycle and independent product evaluation. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Build an independently reviewed evaluation set and structured ingestion/security controls. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 
