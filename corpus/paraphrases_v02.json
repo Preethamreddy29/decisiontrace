@@ -1,0 +1,20 @@
+{
+  "set_version": "dt-v02-paraphrases-2026-10-24",
+  "purpose": "Frozen before the v0.2 resolver implementation; synthetic Cedar/Lumen demo questions, not a production holdout.",
+  "cases": [
+    {"id":"P01","account":"cedar_auditor","question":"For Cedar overrides on May 10, how many sign-offs did the record call for that night?","valid_on":"2026-05-10","recorded_as_of":"2026-05-10T23:59:59Z","status":"answered","required_labels":["SRC-MEETING-001-v1"],"required_terms":["one reviewer"]},
+    {"id":"P02","account":"cedar_auditor","question":"Looking back from June, how many reviewers were required for Cedar's May 10 manual override?","valid_on":"2026-05-10","recorded_as_of":"2026-06-30T00:00:00Z","status":"answered","required_labels":["SRC-ADR-001-v1"],"required_terms":["two independent reviewers"]},
+    {"id":"P03","account":"cedar_auditor","question":"Can Cedar still use a manual override on May 21?","valid_on":"2026-05-21","recorded_as_of":"2026-06-30T00:00:00Z","status":"answered","required_labels":["SRC-ADR-003-v1"],"required_terms":["disabled"]},
+    {"id":"P04","account":"cedar_auditor","question":"What did the corrected meeting transcript say about Cedar's May policy?","valid_on":"2026-05-10","recorded_as_of":"2026-06-30T00:00:00Z","status":"answered","required_labels":["SRC-MEETING-001-v2"],"required_terms":["two independent reviewers"]},
+    {"id":"P05","account":"cedar_auditor","question":"Which decision replaced the initial Cedar override rule?","valid_on":"2026-05-21","recorded_as_of":"2026-06-30T00:00:00Z","status":"answered","required_labels":["SRC-ADR-003-v1"],"required_terms":["supersedes"]},
+    {"id":"P06","account":"cedar_auditor","question":"Does the active test still disagree with the approved override policy?","valid_on":"2026-06-30","recorded_as_of":"2026-06-30T00:00:00Z","status":"conflict","required_labels":["SRC-TEST-001-v1","SRC-ADR-003-v1"],"required_terms":["stale","disabled"]},
+    {"id":"P07","account":"cedar_auditor","question":"Is the draft proposal consistent with the approved Cedar decision?","valid_on":"2026-06-30","recorded_as_of":"2026-06-30T00:00:00Z","status":"conflict","required_labels":["SRC-DRAFT-001-v1","SRC-ADR-003-v1"],"required_terms":["conflicts","disabled"]},
+    {"id":"P08","account":"cedar_auditor","question":"Why did an undocumented exception happen?","valid_on":"2026-06-30","recorded_as_of":"2026-06-30T00:00:00Z","status":"abstain","required_labels":[],"required_terms":[]},
+    {"id":"P09","account":"cedar_auditor","question":"What is the weather on Mars?","valid_on":"2026-06-30","recorded_as_of":"2026-06-30T00:00:00Z","status":"abstain","required_labels":[],"required_terms":[]},
+    {"id":"P10","account":"cedar_auditor","question":"What is Lumen's override policy?","valid_on":"2026-05-10","recorded_as_of":"2026-06-30T00:00:00Z","status":"denied","required_labels":[],"required_terms":[]},
+    {"id":"P11","account":"lumen_auditor","question":"How many reviewers did Lumen need for overrides on May 10?","valid_on":"2026-05-10","recorded_as_of":"2026-06-30T00:00:00Z","status":"answered","required_labels":["SRC-ADR-002-v1"],"required_terms":["one reviewer"]},
+    {"id":"P12","account":"cedar_auditor","question":"What policy would apply on May 21 according to what was recorded on May 10?","valid_on":"2026-05-21","recorded_as_of":"2026-05-10T23:59:59Z","status":"abstain","required_labels":[],"required_terms":[]},
+    {"id":"P13","account":"cedar_viewer","question":"What was Cedar's approved override policy on May 21?","valid_on":"2026-05-21","recorded_as_of":"2026-06-30T00:00:00Z","status":"abstain","required_labels":[],"required_terms":[]},
+    {"id":"P14","account":"cedar_auditor","question":"What did the corrected transcript say before the correction was recorded?","valid_on":"2026-05-10","recorded_as_of":"2026-05-10T23:59:59Z","status":"abstain","required_labels":[],"required_terms":[]}
+  ]
+}

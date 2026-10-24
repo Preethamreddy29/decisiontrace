@@ -36,12 +36,17 @@ def seed() -> None:
             if existing:
                 if existing[0].strip() != digest:
                     raise RuntimeError(f"seed content changed without version: {item['id']}")
+                connection.execute(
+                    "UPDATE source_versions SET external_label = %s WHERE id = %s "
+                    "AND (external_label IS NULL OR external_label = %s)",
+                    (item["id"], source_version_id, item["id"]),
+                )
                 continue
             connection.execute(
                 "INSERT INTO source_versions "
                 "(id, source_id, tenant_id, version, kind, recorded_at, valid_from, valid_to, "
-                "status, content_sha256, content, roles, revoked_at, superseded_at) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                "status, content_sha256, content, roles, revoked_at, superseded_at, external_label) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (
                     source_version_id,
                     stable_id(f"source/{item['source_id']}"),
@@ -49,7 +54,7 @@ def seed() -> None:
                     item["version"], item["kind"], item["recorded_at"],
                     item["valid_from"], item.get("valid_to"), item["status"],
                     digest, item["text"], item["roles"], item.get("revoked_at"),
-                    item.get("superseded_at"),
+                    item.get("superseded_at"), item["id"],
                 ),
             )
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "DecisionTrace first-slice API",
     "version": "0.1.0",
-    "description": "Draft local contract. Tenant and role are derived from the authenticated server context. It is not implemented yet."
+    "description": "Partial local contract. The structured /v1/query and exact source-version GET are implemented for the synthetic v0.2 demo; other operations remain planned. Tenant and role are derived from a server-verified demo bearer token."
   },
   "servers": [
     {
@@ -224,6 +224,15 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "recorded_as_of",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -1246,7 +1255,8 @@
           "kind",
           "sha256",
           "recorded_at",
-          "status"
+          "status",
+          "external_label"
         ],
         "properties": {
           "source_id": {
@@ -1278,9 +1288,18 @@
               "received",
               "review_required",
               "ready",
+              "approved",
+              "recorded",
+              "corrected_record",
+              "draft",
+              "active",
+              "untrusted",
               "revoked",
               "failed"
             ]
+          },
+          "external_label": {
+            "type": "string"
           },
           "valid_from": {
             "type": "string",
@@ -1488,7 +1507,10 @@
           "source_id",
           "version_id",
           "section_id",
-          "label"
+          "label",
+          "quote",
+          "start_char",
+          "end_char"
         ],
         "properties": {
           "source_id": {
@@ -1504,6 +1526,18 @@
           },
           "label": {
             "type": "string"
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start_char": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_char": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       },

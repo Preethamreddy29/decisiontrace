@@ -1,6 +1,6 @@
 # DecisionTrace Requirements Traceability
 
-**As of 2026-10-24:** Phase 1 design coverage and Phase 2 foundation startup are validated. Product behavior and release proofs below remain open.
+**As of 2026-10-24:** Phase 1 design, Phase 2 foundation, and the bounded interactive v0.2 query demo are validated. The full product and release proofs below remain open.
 
 | ID | Requirement | Design location | Required implementation proof |
 |---|---|---|---|
@@ -17,4 +17,4 @@
 | DT-11 | Multi-tenant permission isolation | ADR-010; `threat-to-test.md`; Q10/Q11/Q23 | Full source, query, citation, cache, export, trace matrix passes. |
 | DT-12 | Reproducible local demo and evaluation | `implementation-plan.md`; corpus manifest | Clean setup, 25-case first slice, later 100+ gold and named-hardware report. |
 
-The Phase 1 design gate requires each critical row to have a concrete contract and planned proof. Phase 2 validates the clean-start foundation only; the product-specific implementation proofs in this table remain pending for Phase 3 and later gates.
+The Phase 1 design gate requires each critical row to have a concrete contract and planned proof. Phase 2 validates the clean-start foundation. V0.2 supplies partial runtime proof for DT-04, DT-06, DT-11, and DT-12 through the frozen paraphrase set and live API checks; see `docs/release/v02-interactive-demo.md`. Governed ingestion, production authorization, independent answer evaluation, and the remaining product-specific proofs are pending.

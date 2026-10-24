@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CORPUS = ROOT / "corpus"
 SOURCE_PATH = CORPUS / "sources.json"
 GOLD_PATH = CORPUS / "gold.json"
+PARAPHRASE_PATH = CORPUS / "paraphrases_v02.json"
 MANIFEST_PATH = CORPUS / "manifest.json"
 
 
@@ -27,8 +28,10 @@ def fail(message: str) -> None:
 def validate() -> dict:
     sources_doc = load(SOURCE_PATH)
     gold_doc = load(GOLD_PATH)
+    paraphrase_doc = load(PARAPHRASE_PATH)
     sources = sources_doc["sources"]
     cases = gold_doc["cases"]
+    paraphrases = paraphrase_doc["cases"]
     if not sources_doc.get("fictional"):
         fail("corpus must be declared fictional")
     if gold_doc["corpus_version"] != sources_doc["corpus_version"]:
@@ -37,6 +40,24 @@ def validate() -> dict:
         fail("at least 25 gold cases are required")
     if len({case["id"] for case in cases}) != len(cases):
         fail("duplicate gold case ID")
+    if len(paraphrases) < 14 or len({case["id"] for case in paraphrases}) != len(paraphrases):
+        fail("v0.2 paraphrase set needs 14 distinct cases")
+    source_by_label = {source["id"]: source for source in sources}
+    for case in paraphrases:
+        if case["account"] not in {"cedar_auditor", "cedar_viewer", "lumen_auditor"}:
+            fail(f"invalid paraphrase account: {case['id']}")
+        date.fromisoformat(case["valid_on"])
+        recorded = datetime.fromisoformat(case["recorded_as_of"].replace("Z", "+00:00"))
+        if recorded.tzinfo is None:
+            fail(f"paraphrase missing recorded timezone: {case['id']}")
+        if case["status"] not in {"answered", "conflict", "abstain", "denied"}:
+            fail(f"invalid paraphrase status: {case['id']}")
+        if case["status"] in {"abstain", "denied"} and case["required_labels"]:
+            fail(f"non-answer paraphrase cites a source: {case['id']}")
+        for label in case["required_labels"]:
+            source = source_by_label.get(label)
+            if source is None or source["tenant"] != case["account"].split("_")[0]:
+                fail(f"paraphrase source is missing or outside tenant: {case['id']}")
     if len({source["id"] for source in sources}) != len(sources):
         fail("duplicate source version ID")
 
@@ -96,12 +117,15 @@ def validate() -> dict:
     return {
         "corpus_version": sources_doc["corpus_version"],
         "gold_version": gold_doc["gold_version"],
+        "paraphrase_version": paraphrase_doc["set_version"],
         "license": "MIT",
         "source_versions": len(sources),
         "gold_cases": len(cases),
+        "paraphrase_cases": len(paraphrases),
         "files": {
             "sources.json": hashlib.sha256(SOURCE_PATH.read_bytes()).hexdigest(),
             "gold.json": hashlib.sha256(GOLD_PATH.read_bytes()).hexdigest(),
+            "paraphrases_v02.json": hashlib.sha256(PARAPHRASE_PATH.read_bytes()).hexdigest(),
         },
     }
 
@@ -115,7 +139,7 @@ def main() -> None:
         MANIFEST_PATH.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     elif not MANIFEST_PATH.exists() or load(MANIFEST_PATH) != result:
         fail("manifest missing or out of date; review changes before regenerating it")
-    print(f"Validated {result['source_versions']} source versions and {result['gold_cases']} gold cases.")
+    print(f"Validated {result['source_versions']} source versions, {result['gold_cases']} gold cases, and {result['paraphrase_cases']} v0.2 paraphrases.")
 
 
 if __name__ == "__main__":

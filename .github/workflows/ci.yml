@@ -35,8 +35,10 @@ jobs:
           docker compose --env-file .env.example exec -T api python -m api.app.seed
           docker compose --env-file .env.example exec -T api python -m api.app.smoke
           docker compose --env-file .env.example exec -T api python -m tools.eval_demo
+          docker compose --env-file .env.example exec -T api python -m tools.eval_v02
           curl --fail --silent http://127.0.0.1:8001/health/ready
           curl --fail --silent http://127.0.0.1:5174/
+          python tools/verify_v02_contract.py
       - name: Stop local stack
         if: always()
         run: docker compose --env-file .env.example down
