@@ -1,4 +1,4 @@
-"""Phase 2 readiness API. Product endpoints are not implemented here."""
+"""Readiness API and a clearly scoped synthetic historical-answer demo."""
 
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import Settings, load_settings
 from .db import is_ready
+from .demo import DemoQuery, answer
 
 
 @asynccontextmanager
@@ -74,3 +75,9 @@ def ready(request: Request):
 @app.get("/version")
 def version():
     return {"service": "decisiontrace", "version": "0.1.0-dev", "product_ready": False}
+
+
+@app.post("/demo/query")
+def demo_query(query: DemoQuery, request: Request):
+    settings: Settings = request.app.state.settings
+    return answer(settings.database_url, query)

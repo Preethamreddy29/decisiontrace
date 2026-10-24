@@ -34,6 +34,7 @@ jobs:
         run: |
           docker compose --env-file .env.example exec -T api python -m api.app.seed
           docker compose --env-file .env.example exec -T api python -m api.app.smoke
+          docker compose --env-file .env.example exec -T api python -m tools.eval_demo
           curl --fail --silent http://127.0.0.1:8001/health/ready
           curl --fail --silent http://127.0.0.1:5174/
       - name: Stop local stack

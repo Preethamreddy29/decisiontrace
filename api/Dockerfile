@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r /workspace/api/requirements.txt \
 
 COPY api /workspace/api
 COPY corpus /workspace/corpus
+COPY tools/eval_demo.py /workspace/tools/eval_demo.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

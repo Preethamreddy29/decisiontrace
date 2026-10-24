@@ -1,10 +1,12 @@
 # Progress
 
 **As of:** 2026-10-24
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; Phase 3 pending
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; Phase 3 curated preview in progress
 
 ## 2026-10-24 continuation
 
+- Added a clearly labeled synthetic `/demo/query` route backed by tenant/role-filtered stored source versions and a curated deterministic answer resolver. The UI can compare the then-known 10 May record, its later correction, and the policy effective after 20 May, with expandable source versions.
+- Locally evaluated all 25 seed prompts for expected status and required citation IDs, with critical answer-phrase checks, historical no-future-citation check, and unsupported-question abstention. This is a seed-set preview, not an independent holdout or general question-answering score. See `docs/release/phase3-demo-preview.md`.
 - Chose the MIT license after the maintainer delegated the suitable-license choice.
 - Authored 14 versioned synthetic source records and 25 exact gold labels, including valid/recorded-time distinction, correction, supersession, drift, conflict, abstention, permission denial, revocation, and adversarial text.
 - Froze corpus file hashes in `corpus/manifest.json`. `python tools/validate_corpus.py` passes. Corrected an early source that inadvertently mentioned a future correction in a historical version.
@@ -19,13 +21,13 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- No product source-ingestion, approval, retrieval, answer, citation, deletion, or drift endpoint is implemented. The OpenAPI contract documents intended behavior only.
-- No model, evaluator, 100-question set, security/failure suite, RuleTwin connector, or runnable DecisionTrace product demo exists.
-- Phase 3's historical cited-answer workflow remains the next product milestone.
+- No contracted product source-ingestion, approval, retrieval, answer, citation, deletion, or drift endpoint is implemented. The OpenAPI contract documents intended behavior only; `/demo/query` is a separate synthetic preview.
+- No model, independent holdout evaluator, 100-question set, full security/failure suite, RuleTwin connector, or contracted product demo exists. The curated synthetic preview is runnable.
+- Phase 3's contracted query, claim-level citation, and real authorization flow remains the next product milestone.
 
 ## Next checkpoint
 
-Build the Phase 3 one-tenant temporal cited-answer slice against the frozen 25-case seed corpus. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Use the curated slice to implement the Phase 3 contracted query and claim-level citation path, then evaluate with independent questions and real authorization. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 
