@@ -1,7 +1,13 @@
 # Progress
 
 **As of:** 2026-10-25
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.5 identity/intake preview in verification; full Phase 3 product gate open
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-10-25 v0.6 change-watch and revocation preview
+
+- Added approved-decision-to-downstream-source watches with typed `tests`, `implements`, and `measures` links. A new downstream source version enters a review queue with both exact source records; a distinct auditor records drift or alignment with a reason. This identifies changes for review, not automatic semantic disagreement.
+- Added author-only source revocation with ETag and idempotency. All source versions are removed from API evidence paths, chunks and answer caches are cleared, retry responses are redacted, and audit/outbox records persist. The connector revision path refuses a revoked binding.
+- Added a UI comparison and review flow, a revocation control, live v0.6 checks, and a manual scenario in the demo guide. `python tools/demo_preflight.py` passes locally. See `docs/release/v06-change-watch-revocation.md`.
 
 ## 2026-10-25 demo-test readiness follow-up
 
@@ -56,7 +62,7 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, and a stored chunk index are implemented for the bounded synthetic demo. General chunk retrieval, external pull connectors, deletion, drift/evaluation operations, and other planned API operations remain open.
+- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, a stored chunk index, author revocation, and reviewed downstream change watches are implemented for the bounded synthetic demo. General chunk retrieval, external pull connectors, physical deletion, automatic semantic drift, broader evaluation operations, and other planned API operations remain open.
 - An external-token verifier exists but has not been integrated with a real issuer or complete browser sign-in flow. No model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
 - The remaining Phase 3 product work is independent review of answer labels and a real identity-provider integration test. Broader product behavior and security depth continue in later phases.
 

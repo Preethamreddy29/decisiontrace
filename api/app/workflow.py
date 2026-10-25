@@ -20,7 +20,7 @@ from .indexing import index_source
 KEY_PATTERN = re.compile(r"[A-Za-z0-9._-]{8,128}\Z")
 SOURCE_COLUMNS = (
     "id, source_id, version, kind, content_sha256, recorded_at, status, "
-    "external_label, valid_from, valid_to, content, origin, created_by, roles, superseded_at"
+    "external_label, valid_from, valid_to, content, origin, created_by, roles, superseded_at, revoked_at"
 )
 DECISION_COLUMNS = (
     "id, decision_id, version, status, valid_from, valid_to, recorded_at, "
@@ -80,6 +80,11 @@ class ReviewAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action: Literal["approve", "reject"]
     reason: str | None = Field(default=None, max_length=2000)
+
+
+class SourceRevocation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=8, max_length=500)
 
 
 def _require_author(actor: Actor):
@@ -229,6 +234,8 @@ def append_source(database_url: str, actor: Actor, source_id: UUID, body: Source
             raise HTTPException(status_code=409, detail="Stale source version")
         if prior[14] is not None:
             raise HTTPException(status_code=409, detail="Source version already superseded")
+        if prior[15] is not None:
+            raise HTTPException(status_code=409, detail="Source is revoked")
         connection.execute("UPDATE source_versions SET superseded_at = now() WHERE id = %s", (prior[0],))
         version_id = uuid4()
         digest = hashlib.sha256(body.content.encode("utf-8")).hexdigest()
@@ -284,7 +291,7 @@ def push_connector_snapshot(database_url: str, actor: Actor, connector_id: str, 
         if binding:
             prior = connection.execute(f"SELECT {SOURCE_COLUMNS} FROM source_versions WHERE id = %s FOR UPDATE",
                                        (binding[2],)).fetchone()
-            if prior is None or prior[14] is not None:
+            if prior is None or prior[14] is not None or prior[15] is not None:
                 raise HTTPException(status_code=409, detail="Connector source changed outside its revision stream")
             if binding[1] == body.remote_version:
                 if (prior[4].strip() != digest or prior[3] != source.kind
@@ -354,6 +361,58 @@ def source_history(database_url: str, actor: Actor, source_id: UUID) -> list[dic
     if not rows:
         raise HTTPException(status_code=404, detail="Source not found")
     return [_source(row) for row in rows]
+
+
+def revoke_source(database_url: str, actor: Actor, source_id: UUID, body: SourceRevocation,
+                  etag: str, key: str) -> dict:
+    """Retire every version of one authored source from all API evidence paths."""
+    _require_author(actor)
+    tenant_id = stable_id(f"tenant/{actor.tenant}")
+
+    def perform(connection):
+        connection.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(source_id.bytes[:8], "big", signed=True),))
+        latest = connection.execute(
+            f"SELECT {SOURCE_COLUMNS} FROM source_versions WHERE tenant_id = %s AND source_id = %s "
+            "ORDER BY version DESC LIMIT 1 FOR UPDATE", (tenant_id, source_id),
+        ).fetchone()
+        if latest is None or latest[12] is None:
+            raise HTTPException(status_code=404, detail="Source not found")
+        if latest[12] != actor.account:
+            raise HTTPException(status_code=403, detail="Only the source author can revoke it")
+        if latest[15] is not None:
+            raise HTTPException(status_code=409, detail="Source is already revoked")
+        if etag != _source(latest)["etag"]:
+            raise HTTPException(status_code=409, detail="Stale source version")
+        versions = connection.execute(
+            "UPDATE source_versions SET revoked_at = now() WHERE tenant_id = %s AND source_id = %s "
+            "AND revoked_at IS NULL RETURNING id", (tenant_id, source_id),
+        ).fetchall()
+        version_ids = [row[0] for row in versions]
+        connection.execute("DELETE FROM source_chunks WHERE tenant_id = %s AND source_version_id = ANY(%s::uuid[])",
+                           (tenant_id, version_ids))
+        # Preserve retry keys while removing source text from previously stored mutation responses.
+        connection.execute(
+            "UPDATE mutation_requests SET response = %s::jsonb WHERE response->>'source_id' = %s "
+            "AND operation IN ('source.create', 'source.append', 'connector.push')",
+            (json.dumps({"source_id": str(source_id), "status": "revoked"}), str(source_id)),
+        )
+        connection.execute(
+            "UPDATE mutation_requests SET response = jsonb_build_object("
+            "'decision_id', response->>'decision_id', 'status', 'evidence_revoked') "
+            "WHERE response->>'decision_id' IN (SELECT DISTINCT decision_id::text FROM decision_versions "
+            "WHERE tenant_id = %s AND evidence_version_ids && %s::uuid[]) "
+            "AND operation IN ('decision.create', 'decision.review')",
+            (tenant_id, version_ids),
+        )
+        _invalidate_answers(connection, actor)
+        _audit(connection, actor, "source.revoked", latest[0],
+               {"source_id": str(source_id), "version_ids": [str(item) for item in version_ids],
+                "reason": body.reason})
+        return {"source_id": str(source_id), "revoked_version_ids": [str(item) for item in version_ids],
+                "status": "revoked"}
+
+    return _mutation(database_url, actor, "source.revoke", key,
+                     {"source_id": str(source_id), "if_match": etag, **body.model_dump(mode="json")}, perform)
 
 
 def create_decision(database_url: str, actor: Actor, body: DecisionDraft, key: str) -> dict:

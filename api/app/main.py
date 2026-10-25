@@ -19,10 +19,11 @@ from .db import is_ready
 from .auth import ACCOUNTS, Actor, LoginRequest, issue_token, load_demo_credentials, require_actor
 from .query import QueryRequest, open_evidence, query_with_idempotency
 from .oidc import OidcConfig
+from .change_watch import WatchCreate, WatchReview, create_watch, list_watches, review_watch
 from .workflow import (
-    ConnectorSnapshot, DecisionDraft, ReviewAction, SourceCreate, append_source, create_decision,
+    ConnectorSnapshot, DecisionDraft, ReviewAction, SourceCreate, SourceRevocation, append_source, create_decision,
     create_source, decision_history, list_decisions, list_sources,
-    push_connector_snapshot, review_decision, source_history,
+    push_connector_snapshot, review_decision, revoke_source, source_history,
 )
 
 
@@ -214,6 +215,16 @@ def post_source_version(
     return append_source(request.app.state.settings.database_url, actor, source_id, body, if_match, idempotency_key)
 
 
+@app.post("/v1/sources/{source_id}/revoke")
+def post_source_revoke(
+    source_id: UUID, body: SourceRevocation, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    if_match: str = Header(alias="If-Match"),
+    actor: Actor = Depends(require_actor),
+):
+    return revoke_source(request.app.state.settings.database_url, actor, source_id, body, if_match, idempotency_key)
+
+
 @app.get("/v1/decision-contracts")
 def get_decisions(request: Request, actor: Actor = Depends(require_actor)):
     return list_decisions(request.app.state.settings.database_url, actor)
@@ -241,6 +252,29 @@ def post_decision_review(
 @app.get("/v1/decision-contracts/{decision_id}/history")
 def get_decision_history(decision_id: UUID, request: Request, actor: Actor = Depends(require_actor)):
     return decision_history(request.app.state.settings.database_url, actor, decision_id)
+
+
+@app.post("/v1/decision-contracts/{decision_id}/watches", status_code=201)
+def post_change_watch(
+    decision_id: UUID, body: WatchCreate, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    actor: Actor = Depends(require_actor),
+):
+    return create_watch(request.app.state.settings.database_url, actor, decision_id, body, idempotency_key)
+
+
+@app.get("/v1/change-watches")
+def get_change_watches(request: Request, actor: Actor = Depends(require_actor)):
+    return list_watches(request.app.state.settings.database_url, actor)
+
+
+@app.post("/v1/change-watches/{watch_id}/review")
+def post_change_watch_review(
+    watch_id: UUID, body: WatchReview, request: Request,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    actor: Actor = Depends(require_actor),
+):
+    return review_watch(request.app.state.settings.database_url, actor, watch_id, body, idempotency_key)
 
 
 @app.post("/v1/query")

@@ -1,6 +1,6 @@
 # DecisionTrace demo test guide
 
-**For:** the local fictional v0.5 demo. These steps use no real customer data. The sample file SHA-256 is `181b863fb5462c35de608e0fca195c39b1bebd0ae43e72ad95d423fbbae890f2`.
+**For:** the local fictional v0.6 demo. These steps use no real customer data. The sample file SHA-256 is `181b863fb5462c35de608e0fca195c39b1bebd0ae43e72ad95d423fbbae890f2`.
 
 ## Prepare once
 
@@ -20,8 +20,11 @@
 | Independent review | Select **Create decision draft**. Try to approve it as the Cedar author, then use **Switch identity** and sign in as **Cedar independent reviewer**. Approve the draft. | Self approval is refused; the other auditor can approve. The decision history shows draft then approved. |
 | Cited answer | Ask the prepared invoice-hold question after approval; open the citation. | Answer says **finance approval before release**. The approved decision version and highlighted **Invoice holds** section are visible. |
 | Tenant boundary | Switch to **Lumen auditor**. | Cedar-authored sources and decisions are absent from Lumen's lists. A Cedar question returns denied. |
+| Downstream change watch | Switch back to **Cedar author / auditor**. Add a new source with origin `Fictional invoice test` and text `# Invoice test\n## Assertion\nThe test requires finance approval before invoice release.` Select the approved invoice-hold decision and this source under **Watch downstream changes**, then create a **Tests** watch. Select the test source, change its text to `# Invoice test\n## Assertion\nThe test releases an invoice without finance approval.`, and choose **Save corrected version**. | The watch moves from **current** to **needs review**. Expanding it shows the approved policy, the linked test baseline, and the current test version. The status describes a source-version change; it does not automatically assert semantic drift. |
+| Independent drift review | Switch to **Cedar independent reviewer**, expand the changed watch, and choose **Confirm drift**. Enter a reason of at least eight characters. | The watch becomes **drift** with the reviewer's reason. Its creator cannot review it. A later test-source correction creates a fresh **needs review** item. |
+| Revocation | Switch to **Cedar author / auditor**, select that fictional test source, and choose **Revoke source**. Enter a reason. | All versions of that test source disappear from source history, answer evidence, and the watch view. The local audit event remains. Revocation cannot be undone from the UI. |
 
-The example source becomes a real record in the local fictional database when you upload it. Use a fresh filename for repeated upload tests if you want to distinguish the results. The preflight checks clean up their own disposable sources; they do not remove your manual demo records.
+The example source becomes a real record in the local fictional database when you upload it. Use a fresh filename for repeated upload tests if you want to distinguish the results. The preflight checks clean up their own disposable sources; they do not remove your manual demo records. Revocation withdraws source evidence from the API and index; it retains the raw row for local audit and is not physical erasure.
 
 ## Results to send back
 

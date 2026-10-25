@@ -75,14 +75,22 @@ def cleanup_eval_data(origin_pattern: str = "__v03_eval__/%"):
         ).fetchall()
         decision_version_ids = [row[0] for row in decisions]
         decision_ids = list({row[1] for row in decisions})
-        subjects = version_ids + decision_version_ids
+        watch_ids = [row[0] for row in connection.execute(
+            "SELECT id FROM change_watches WHERE tenant_id = %s AND "
+            "(decision_version_id = ANY(%s::uuid[]) OR downstream_source_id = ANY(%s::uuid[]))",
+            (tenant, decision_version_ids, source_ids),
+        ).fetchall()]
+        subjects = version_ids + decision_version_ids + watch_ids
         connection.execute("DELETE FROM query_requests WHERE idempotency_key LIKE 'eval-v03-%'")
         connection.execute("DELETE FROM audit_events WHERE tenant_id = %s AND subject_id = ANY(%s::uuid[])", (tenant, subjects))
         connection.execute("DELETE FROM outbox_events WHERE tenant_id = %s AND payload->>'subject_id' = ANY(%s::text[])",
                            (tenant, [str(item) for item in subjects]))
         connection.execute("DELETE FROM mutation_requests WHERE response->>'source_id' = ANY(%s::text[]) "
-                           "OR response->>'decision_id' = ANY(%s::text[])",
-                           ([str(item) for item in source_ids], [str(item) for item in decision_ids]))
+                           "OR response->>'decision_id' = ANY(%s::text[]) OR response->>'watch_id' = ANY(%s::text[])",
+                           ([str(item) for item in source_ids], [str(item) for item in decision_ids],
+                            [str(item) for item in watch_ids]))
+        connection.execute("DELETE FROM change_watches WHERE tenant_id = %s AND id = ANY(%s::uuid[])",
+                           (tenant, watch_ids))
         connection.execute("DELETE FROM decision_versions WHERE tenant_id = %s AND decision_id = ANY(%s::uuid[])",
                            (tenant, decision_ids))
         connection.execute("DELETE FROM ingestion_jobs WHERE tenant_id = %s AND source_version_id = ANY(%s::uuid[])",

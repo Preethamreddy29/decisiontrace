@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DecisionTrace first-slice API",
-    "version": "0.5.0-preview",
-    "description": "Partial local contract. Governed source versioning, bounded file and connector-snapshot intake, decision review, structured query, and exact citation opening are implemented. Tenant and role come from a server-verified demo token or a configured OIDC access token. Other operations remain planned."
+    "version": "0.6.0-preview",
+    "description": "Partial local contract. Governed source versioning, bounded intake, decision review, exact citations, source revocation, and reviewable downstream change watches are implemented. Tenant and role come from a verified demo or OIDC token. Other operations remain planned."
   },
   "servers": [
     {
@@ -16,6 +16,50 @@
     }
   ],
   "paths": {
+    "/v1/sources/{source_id}/revoke": {
+      "post": {
+        "operationId": "revokeSource",
+        "summary": "Revoke all versions of an authored source and remove answer/index visibility",
+        "parameters": [
+          {"name": "source_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}},
+          {"name": "If-Match", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["reason"], "properties": {"reason": {"type": "string", "minLength": 8, "maxLength": 500}}}}}},
+        "responses": {"200": {"description": "Source revoked"}, "403": {"description": "Author required"}, "404": {"description": "Source unavailable"}, "409": {"description": "Stale or already revoked"}}
+      }
+    },
+    "/v1/decision-contracts/{decision_id}/watches": {
+      "post": {
+        "operationId": "createChangeWatch",
+        "summary": "Link an approved decision to a downstream source version",
+        "parameters": [
+          {"name": "decision_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["decision_evidence_version_id", "downstream_source_id", "relation_type"], "properties": {"decision_evidence_version_id": {"type": "string", "format": "uuid"}, "downstream_source_id": {"type": "string", "format": "uuid"}, "relation_type": {"type": "string", "enum": ["implements", "tests", "measures"]}}}}}},
+        "responses": {"201": {"description": "Watch created"}, "404": {"description": "Evidence unavailable"}, "409": {"description": "Decision is not approved or link exists"}}
+      }
+    },
+    "/v1/change-watches": {
+      "get": {
+        "operationId": "listChangeWatches",
+        "summary": "List authorized watches and source-version change findings",
+        "responses": {"200": {"description": "Authorized watch list"}, "403": {"description": "Reviewer role required"}}
+      }
+    },
+    "/v1/change-watches/{watch_id}/review": {
+      "post": {
+        "operationId": "reviewChangeWatch",
+        "summary": "Independently classify one observed downstream source version",
+        "parameters": [
+          {"name": "watch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["observed_source_version_id", "outcome", "reason"], "properties": {"observed_source_version_id": {"type": "string", "format": "uuid"}, "outcome": {"type": "string", "enum": ["drift", "aligned"]}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {"200": {"description": "Finding reviewed"}, "404": {"description": "Watch unavailable"}, "409": {"description": "Stale version, creator review, or already reviewed"}}
+      }
+    },
     "/v1/session": {
       "get": {
         "operationId": "getCurrentSession",

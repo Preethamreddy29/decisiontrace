@@ -8,6 +8,7 @@ type Evidence = { external_label: string; kind: string; status: string; recorded
 type Session = { access_token: string; account: string; tenant: string; role: string }
 type WorkflowSource = { source_id: string; version_id: string; version: number; kind: string; status: string; external_label: string; content: string; sections: EvidenceSection[]; origin: string; created_by: string; valid_from: string; recorded_at: string; sha256: string; etag: string; superseded_at: string | null }
 type Decision = { decision_id: string; version_id: string; version: number; title: string; status: string; valid_from: string; recorded_at: string; owner_id: string; approver_id: string | null; evidence_version_ids: string[]; etag: string }
+type ChangeWatch = { watch_id: string; decision_title: string; relation_type: string; created_by: string; decision_evidence: { label: string; content: string }; downstream: { source_id: string; baseline_label: string; baseline_content: string; observed_version_id: string; observed_label: string; observed_content: string }; status: 'current' | 'needs_review' | 'drift' | 'aligned'; review: { reason: string; reviewed_by: string } | null }
 
 const examples = [
   { label: 'Known on 10 May', question: 'How many reviewers did Cedar overrides require on May 10?', valid: '2026-05-10', known: '2026-05-10T23:59' },
@@ -57,6 +58,10 @@ export default function App() {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadInputKey, setUploadInputKey] = useState(0)
   const [uploadKind, setUploadKind] = useState<'markdown' | 'transcript' | 'json'>('markdown')
+  const [watches, setWatches] = useState<ChangeWatch[]>([])
+  const [watchDecisionId, setWatchDecisionId] = useState('')
+  const [watchSourceId, setWatchSourceId] = useState('')
+  const [watchRelation, setWatchRelation] = useState<'implements' | 'tests' | 'measures'>('tests')
 
   useEffect(() => {
     void fetch('/api/health/ready', { cache: 'no-store' })
@@ -90,7 +95,10 @@ export default function App() {
         const decisionResponse = await authorized('/v1/decision-contracts', {}, active)
         if (!decisionResponse.ok) throw new Error(await message(decisionResponse))
         setDecisions(await decisionResponse.json() as Decision[])
-      } else setDecisions([])
+        const watchResponse = await authorized('/v1/change-watches', {}, active)
+        if (!watchResponse.ok) throw new Error(await message(watchResponse))
+        setWatches(await watchResponse.json() as ChangeWatch[])
+      } else { setDecisions([]); setWatches([]) }
       if (selectedSource) {
         const historyResponse = await authorized(`/v1/sources/${selectedSource}/versions`, {}, active)
         setHistory(historyResponse.ok ? await historyResponse.json() as WorkflowSource[] : [])
@@ -159,6 +167,62 @@ export default function App() {
       if (!response.ok) throw new Error(await message(response))
       setHistory(await response.json() as WorkflowSource[])
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load source history') }
+  }
+
+  async function revokeSelectedSource() {
+    if (!session) return
+    const current = sources.find(item => item.source_id === selectedSource)
+    if (!current || current.created_by !== session.account) return
+    const reason = window.prompt(`Why should ${current.external_label} be revoked? Its versions will stop appearing in answers and source history.`)
+    if (reason === null) return
+    if (reason.trim().length < 8) { setError('Give a reason of at least 8 characters'); return }
+    setBusy(true); setError(''); setWorkflowNotice('')
+    try {
+      const response = await authorized(`/v1/sources/${current.source_id}/revoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID(), 'If-Match': current.etag },
+        body: JSON.stringify({ reason: reason.trim() }),
+      })
+      if (!response.ok) throw new Error(await message(response))
+      setSelectedSource(''); setHistory([]); setAnswer(null); setEvidence({})
+      setWorkflowNotice(`${current.external_label} revoked. Its versions and dependent answers are unavailable.`)
+      await refreshWorkflow()
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not revoke source') }
+    finally { setBusy(false) }
+  }
+
+  async function createWatch() {
+    if (!watchDecisionId || !watchSourceId) { setError('Choose an approved decision and downstream source'); return }
+    const decision = decisions.find(item => item.decision_id === watchDecisionId && item.status === 'approved')
+    if (!decision) { setError('Choose an approved decision'); return }
+    setBusy(true); setError(''); setWorkflowNotice('')
+    try {
+      const response = await authorized(`/v1/decision-contracts/${decision.decision_id}/watches`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify({ decision_evidence_version_id: decision.evidence_version_ids[0], downstream_source_id: watchSourceId, relation_type: watchRelation }),
+      })
+      if (!response.ok) throw new Error(await message(response))
+      setWorkflowNotice('Change watch saved. Correct the downstream source to create a review item.')
+      await refreshWorkflow()
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not create change watch') }
+    finally { setBusy(false) }
+  }
+
+  async function reviewWatch(item: ChangeWatch, outcome: 'drift' | 'aligned') {
+    const reason = window.prompt(outcome === 'drift' ? 'What conflicts with the approved decision?' : 'Why is this change still aligned?')
+    if (reason === null) return
+    if (reason.trim().length < 8) { setError('Give a review reason of at least 8 characters'); return }
+    setBusy(true); setError(''); setWorkflowNotice('')
+    try {
+      const response = await authorized(`/v1/change-watches/${item.watch_id}/review`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify({ observed_source_version_id: item.downstream.observed_version_id, outcome, reason: reason.trim() }),
+      })
+      if (!response.ok) throw new Error(await message(response))
+      setWorkflowNotice(`Change reviewed as ${outcome}.`)
+      await refreshWorkflow()
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not review change') }
+    finally { setBusy(false) }
   }
 
   async function saveSource(append = false) {
@@ -274,7 +338,7 @@ export default function App() {
         <button type="submit" disabled={busy}>{authMode === 'demo' ? 'Enter demo' : 'Connect'}</button>
       </form>
     </section> : <>
-      <section className="identity"><div><span className="eyebrow">VERIFIED IDENTITY</span><strong>{session.tenant} · {session.role} · {session.account}</strong></div><button type="button" className="quiet" onClick={() => { setSession(null); setAnswer(null); setEvidence({}); setSources([]); setDecisions([]); setDecisionHistory({}); setHistory([]); setSelectedSource(''); setError('') }}>Switch identity</button></section>
+      <section className="identity"><div><span className="eyebrow">VERIFIED IDENTITY</span><strong>{session.tenant} · {session.role} · {session.account}</strong></div><button type="button" className="quiet" onClick={() => { setSession(null); setAnswer(null); setEvidence({}); setSources([]); setDecisions([]); setWatches([]); setDecisionHistory({}); setHistory([]); setSelectedSource(''); setError('') }}>Switch identity</button></section>
       <section className="panel" aria-label="Decision query">
         <h2>Trace a decision</h2>
         <div className="examples" role="group" aria-label="Example questions">{examples.map((item, index) => <button type="button" className="chip" key={item.label} onClick={() => choose(index)}>{item.label}</button>)}</div>
@@ -295,7 +359,7 @@ export default function App() {
               <label>Origin<input value={sourceOrigin} onChange={event => setSourceOrigin(event.target.value)} maxLength={500} required /></label>
               <label>Policy valid from<input type="date" value={sourceValidFrom} onChange={event => setSourceValidFrom(event.target.value)} required /></label>
               <label>Exact source text with headings<textarea rows={6} value={sourceContent} onChange={event => setSourceContent(event.target.value)} minLength={15} maxLength={10000} required /></label>
-              <div className="button-row"><button type="submit" disabled={busy}>Add source</button><button type="button" className="quiet" disabled={busy || !selectedSource} onClick={() => void saveSource(true)}>Save corrected version</button></div>
+              <div className="button-row"><button type="submit" disabled={busy}>Add source</button><button type="button" className="quiet" disabled={busy || !selectedSource} onClick={() => void saveSource(true)}>Save corrected version</button>{sources.find(item => item.source_id === selectedSource)?.created_by === session.account && <button type="button" className="quiet" disabled={busy} onClick={() => void revokeSelectedSource()}>Revoke source</button>}</div>
             </form>
             <div className="history"><strong>Upload a UTF-8 file</strong><p className="muted">Markdown, transcript text, or JSON up to 32 KiB and 10,000 characters. The file is streamed into source versioning without using its name as a storage path.</p><div className="workflow-form"><label>File<input key={uploadInputKey} type="file" accept=".md,.txt,.json" onChange={event => setUploadFile(event.target.files?.[0] || null)} /></label><label>Format<select value={uploadKind} onChange={event => setUploadKind(event.target.value as typeof uploadKind)}><option value="markdown">Markdown</option><option value="transcript">Transcript</option><option value="json">JSON</option></select></label><button type="button" disabled={busy || !uploadFile} onClick={() => void uploadSource()}>Upload file</button></div></div>
             {history.length > 0 && <div className="history"><strong>Source history</strong>{history.map(item => <div className="history-item" key={item.version_id}><small>{item.external_label} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {item.superseded_at ? 'earlier version' : 'current'}</small><p className="section-text">{item.content}</p><small>Sections: {item.sections.map(section => section.title).join(' · ')}</small></div>)}</div>}
@@ -306,6 +370,12 @@ export default function App() {
             <button type="button" disabled={busy || !selectedSource} onClick={() => void createDraft()}>Create decision draft</button>
             <div className="history"><strong>Decisions</strong>{decisions.length === 0 && <p className="muted">No decisions yet for this tenant.</p>}{decisions.map(item => <div className="history-item" key={item.decision_id}><div className="decision-row"><span className={`badge ${item.status}`}>{item.status}</span><small>v{item.version} · {item.valid_from}</small></div><p>{item.title}</p><small>Evidence version {item.evidence_version_ids[0]?.slice(0, 8)} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC</small><div className="button-row"><button type="button" className="quiet" onClick={() => void showDecisionHistory(item.decision_id)}>View version history</button>{item.status === 'draft' && <><button type="button" disabled={busy} onClick={() => void review(item, 'approve')}>Approve</button><button type="button" className="quiet" disabled={busy} onClick={() => void review(item, 'reject')}>Reject</button></>}</div>{decisionHistory[item.decision_id] && <div className="version-list">{decisionHistory[item.decision_id].map(version => <p key={version.version_id}><strong>v{version.version} · {version.status}</strong><small>Recorded {version.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {version.approver_id ? `reviewer ${version.approver_id.slice(0, 8)}` : `author ${version.owner_id.slice(0, 8)}`}</small></p>)}</div>}</div>)}</div>
           </div>
+        </div>
+        <div className="history" aria-label="Downstream change watches"><strong>Watch downstream changes</strong><p className="muted">Link an approved decision to a test, implementation, or metric source. A newer source version needs human review; a version change alone does not prove drift.</p>
+          <div className="workflow-grid"><label>Approved decision<select value={watchDecisionId} onChange={event => setWatchDecisionId(event.target.value)}><option value="">Choose a decision</option>{decisions.filter(item => item.status === 'approved').map(item => <option key={item.decision_id} value={item.decision_id}>{item.title}</option>)}</select></label><label>Downstream source<select value={watchSourceId} onChange={event => setWatchSourceId(event.target.value)}><option value="">Choose a source</option>{sources.map(item => <option key={item.source_id} value={item.source_id}>{item.external_label} · {item.origin}</option>)}</select></label></div>
+          <div className="button-row"><label>Relationship<select value={watchRelation} onChange={event => setWatchRelation(event.target.value as typeof watchRelation)}><option value="tests">Tests</option><option value="implements">Implements</option><option value="measures">Measures</option></select></label><button type="button" disabled={busy || !watchDecisionId || !watchSourceId} onClick={() => void createWatch()}>Create watch</button></div>
+          {watches.length === 0 && <p className="muted">No watches yet for this tenant.</p>}
+          {watches.map(item => <div className="history-item" key={item.watch_id}><div className="decision-row"><span className={`badge ${item.status}`}>{item.status.replace('_', ' ')}</span><small>{item.relation_type} · {item.downstream.observed_label}</small></div><p>{item.decision_title}</p><details><summary>Compare approved evidence and downstream versions</summary><strong>{item.decision_evidence.label} · approved evidence</strong><p className="section-text">{item.decision_evidence.content}</p><strong>{item.downstream.baseline_label} · linked baseline</strong><p className="section-text">{item.downstream.baseline_content}</p><strong>{item.downstream.observed_label} · current downstream</strong><p className="section-text">{item.downstream.observed_content}</p></details>{item.review && <p className="muted">{item.review.reviewed_by}: {item.review.reason}</p>}{item.status === 'needs_review' && item.created_by !== session.account && <div className="button-row"><button type="button" disabled={busy} onClick={() => void reviewWatch(item, 'drift')}>Confirm drift</button><button type="button" className="quiet" disabled={busy} onClick={() => void reviewWatch(item, 'aligned')}>Mark aligned</button></div>}</div>)}
         </div>
         {workflowNotice && <p className="success" role="status">{workflowNotice}</p>}
       </section>}

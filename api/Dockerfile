@@ -16,6 +16,8 @@ COPY tools/eval_v05.py /workspace/tools/eval_v05.py
 COPY tools/eval_holdout_v05.py /workspace/tools/eval_holdout_v05.py
 COPY tools/eval_demo_readiness.py /workspace/tools/eval_demo_readiness.py
 COPY tools/eval_oidc_route.py /workspace/tools/eval_oidc_route.py
+COPY tools/eval_v06_revocation.py /workspace/tools/eval_v06_revocation.py
+COPY tools/eval_v06_watches.py /workspace/tools/eval_v06_watches.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

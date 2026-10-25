@@ -44,7 +44,7 @@ def migrate() -> None:
         if connection.execute("SELECT to_regclass('source_chunks')").fetchone()[0] is not None:
             rows = connection.execute(
                 "SELECT s.tenant_id, s.id, s.kind, s.content FROM source_versions s "
-                "WHERE NOT EXISTS (SELECT 1 FROM source_chunks c WHERE c.tenant_id = s.tenant_id "
+                "WHERE s.revoked_at IS NULL AND NOT EXISTS (SELECT 1 FROM source_chunks c WHERE c.tenant_id = s.tenant_id "
                 "AND c.source_version_id = s.id)"
             ).fetchall()
             for tenant_id, version_id, kind, content in rows:
