@@ -18,10 +18,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .auth import Actor
 from .db import connect
 from .seed import stable_id
+from .sections import parse_sections, section_for_span
 
 
 CORPUS_VERSION = "dt-synthetic-v0.1"
-PIPELINE = {"retrieval": "temporal-relational-v0.2", "answer": "exact-source-sentence-v0.2"}
+PIPELINE = {"retrieval": "temporal-sections-v0.4", "answer": "exact-source-sentence-v0.4"}
 
 
 class QueryRequest(BaseModel):
@@ -85,10 +86,13 @@ def visible_sources(database_url: str, actor: Actor, as_of: datetime, source_ids
 
 
 def _sentence(source: Source, *required: str) -> str | None:
-    for match in re.finditer(r"[^.!?]+[.!?]?", source.content):
-        candidate = match.group().strip()
-        if candidate and all(term in candidate.lower() for term in required):
-            return candidate
+    for section in parse_sections(source.kind, source.content):
+        text = source.content[section.start_char:section.end_char]
+        for match in re.finditer(r"[^.!?]+[.!?]?", text):
+            candidate = match.group().strip()
+            candidate = re.sub(r"^#{1,6}[ \t]+[^\n]+\n[ \t]*", "", candidate).strip()
+            if candidate and all(term in candidate.lower() for term in required):
+                return candidate
     return None
 
 
@@ -96,11 +100,12 @@ def _claim(source: Source, sentence: str, decision_version_id: str | None = None
     start = source.content.find(sentence)
     if start < 0:
         raise RuntimeError("citation quote is not in its source version")
+    section = section_for_span(source.kind, source.content, start, start + len(sentence))
     result = {
         "text": sentence,
         "citations": [{
             "source_id": source.source_id, "version_id": source.version_id,
-            "section_id": "body", "label": source.label, "quote": sentence,
+            "section_id": section.section_id, "label": source.label, "quote": sentence,
             "start_char": start, "end_char": start + len(sentence),
         }],
     }
@@ -109,8 +114,8 @@ def _claim(source: Source, sentence: str, decision_version_id: str | None = None
     return result
 
 
-def _approved_policy(database_url: str, actor: Actor, valid_on: date, as_of: datetime):
-    """Return the newest reviewed manual-override decision, if one existed then."""
+def _approved_policy(database_url: str, actor: Actor, valid_on: date, as_of: datetime, title_pattern: str = "%manual override%"):
+    """Return the newest reviewed decision for a bounded policy topic."""
     with connect(database_url) as connection:
         return connection.execute(
             "SELECT d.id, d.evidence_version_ids FROM decision_versions d WHERE d.tenant_id = %s "
@@ -120,7 +125,7 @@ def _approved_policy(database_url: str, actor: Actor, valid_on: date, as_of: dat
             "WHERE NOT EXISTS (SELECT 1 FROM source_versions s WHERE s.id = evidence.id "
             "AND s.tenant_id = d.tenant_id AND %s = ANY(s.roles) AND s.revoked_at IS NULL)) "
             "ORDER BY d.valid_from DESC, d.recorded_at DESC LIMIT 1",
-            (stable_id(f"tenant/{actor.tenant}"), valid_on, valid_on, as_of, "%manual override%", actor.role),
+            (stable_id(f"tenant/{actor.tenant}"), valid_on, valid_on, as_of, title_pattern, actor.role),
         ).fetchone()
 
 
@@ -165,7 +170,18 @@ def resolve(database_url: str, actor: Actor, query: QueryRequest) -> dict:
     status = "answered"
     summary = None
 
-    if terms & {"test", "tests", "drift", "implementation"}:
+    if ("invoice" in terms or "payment" in terms) and ("hold" in terms or "holds" in terms):
+        reviewed = _approved_policy(database_url, actor, valid_on, query.recorded_as_of, "%invoice hold%")
+        if reviewed:
+            matching = [source for source in sources if UUID(source.version_id) in reviewed[1]]
+            if len(matching) != len(reviewed[1]):
+                return _empty("abstain", "The approved decision's exact evidence is no longer available.", query, valid_on)
+            policy = next((source for source in matching if "invoice hold" in source.content.lower()), None)
+            if policy:
+                quote = _sentence(policy, "invoice hold")
+                if quote:
+                    claims = [_claim(policy, quote, str(reviewed[0]))]
+    elif terms & {"test", "tests", "drift", "implementation"}:
         test = next((s for s in sources if s.kind == "test" and s.status == "active"), None)
         policy = _policy(sources, valid_on, query.recorded_as_of)
         if test and policy:
@@ -241,7 +257,9 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
         current = {s.version_id: s for s in visible_sources(database_url, actor, query.recorded_as_of, query.source_ids)}
         if any(
             c["version_id"] not in current or
-            current[c["version_id"]].content[c["start_char"]:c["end_char"]] != c["quote"]
+            current[c["version_id"]].content[c["start_char"]:c["end_char"]] != c["quote"] or
+            section_for_span(current[c["version_id"]].kind, current[c["version_id"]].content,
+                             c["start_char"], c["end_char"]).section_id != c["section_id"]
             for claim in existing[1]["claims"] for c in claim["citations"]
         ):
             raise HTTPException(status_code=409, detail="Stored answer references evidence that is no longer available")
@@ -273,5 +291,6 @@ def open_evidence(database_url: str, actor: Actor, source_id: UUID, version_id: 
                 "valid_from": source.valid_from.isoformat(),
                 "valid_to": source.valid_to.isoformat() if source.valid_to else None,
                 "status": source.status, "content": source.content,
+                "sections": [section.as_dict() for section in parse_sections(source.kind, source.content)],
             }
     return None

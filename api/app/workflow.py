@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .auth import ACCOUNTS, Actor
 from .db import connect
 from .seed import stable_id
+from .sections import parse_sections
 
 
 KEY_PATTERN = re.compile(r"[A-Za-z0-9._-]{8,128}\Z")
@@ -134,6 +135,7 @@ def _source(row) -> dict:
         "status": row[6], "external_label": row[7],
         "valid_from": row[8].isoformat(), "valid_to": row[9].isoformat() if row[9] else None,
         "content": row[10], "origin": row[11], "created_by": row[12],
+        "sections": [section.as_dict() for section in parse_sections(row[3], row[10])],
         "permissions": row[13], "superseded_at": row[14].isoformat() if row[14] else None,
         "etag": f'"sv-{row[0]}"',
     }

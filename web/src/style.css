@@ -23,6 +23,7 @@ button:hover { background: #0b2a54; } button:disabled { opacity: .6; cursor: not
 .citations { display: grid; gap: 10px; } .citation { border: 1px solid #dfe6f0; border-radius: 10px; padding: 14px 16px; } .source-button { padding: 0; background: transparent; color: #173d74; text-decoration: underline; text-align: left; } .source-button:hover { background: transparent; color: #0b2a54; }
 blockquote { border-left: 3px solid #9fb9db; margin: 14px 0 0; padding: 4px 0 4px 13px; color: #536275; line-height: 1.5; }
 .source-detail { background: #f5f8fc; border-radius: 9px; margin-top: 14px; padding: 16px; overflow-wrap: anywhere; } .source-detail p { line-height: 1.55; } mark { background: #fff1a8; }
+.source-detail h4 { margin: 8px 0; } .section-text { white-space: pre-wrap; }
 code { background: #eaf0f8; padding: 2px 5px; border-radius: 4px; }
 .workflow-heading, .decision-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .workflow-heading h2 { margin: 7px 0 0; } .workflow-heading .badge { white-space: nowrap; }

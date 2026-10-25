@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="DecisionTrace local demo", version="0.3.0-demo", lifespan=lifespan)
+app = FastAPI(title="DecisionTrace local demo", version="0.4.0-demo", lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -83,7 +83,7 @@ def ready(request: Request):
 
 @app.get("/version")
 def version():
-    return {"service": "decisiontrace", "version": "0.3.0-demo", "product_ready": False}
+    return {"service": "decisiontrace", "version": "0.4.0-demo", "product_ready": False}
 
 
 @app.get("/demo/accounts")

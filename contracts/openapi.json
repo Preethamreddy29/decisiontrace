@@ -1417,6 +1417,21 @@
             "type": "string",
             "description": "Returned only to an authorized reader."
           },
+          "sections": {
+            "type": "array",
+            "description": "Deterministic section IDs and exact character spans for this source version.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["section_id", "title", "start_char", "end_char"],
+              "properties": {
+                "section_id": { "type": "string", "minLength": 1 },
+                "title": { "type": "string", "minLength": 1 },
+                "start_char": { "type": "integer", "minimum": 0 },
+                "end_char": { "type": "integer", "minimum": 0 }
+              }
+            }
+          },
           "origin": {
             "type": [
               "string",

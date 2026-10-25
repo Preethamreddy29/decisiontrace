@@ -3,9 +3,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 type Citation = { source_id: string; version_id: string; section_id: string; label: string; quote: string; start_char: number; end_char: number }
 type Claim = { text: string; citations: Citation[]; decision_version_id?: string }
 type Answer = { answer_id: string; status: 'answered' | 'conflict' | 'abstain' | 'denied'; claims: Claim[]; conflict_summary: string | null; abstention_reason: string | null; recorded_as_of: string; valid_on: string; corpus_or_index_version: string }
-type Evidence = { external_label: string; kind: string; status: string; recorded_at: string; valid_from: string; valid_to: string | null; content: string; sha256: string }
+type EvidenceSection = { section_id: string; title: string; start_char: number; end_char: number }
+type Evidence = { external_label: string; kind: string; status: string; recorded_at: string; valid_from: string; valid_to: string | null; content: string; sha256: string; sections: EvidenceSection[] }
 type Session = { access_token: string; account: string; tenant: string; role: string }
-type WorkflowSource = { source_id: string; version_id: string; version: number; kind: string; status: string; external_label: string; content: string; origin: string; created_by: string; valid_from: string; recorded_at: string; sha256: string; etag: string; superseded_at: string | null }
+type WorkflowSource = { source_id: string; version_id: string; version: number; kind: string; status: string; external_label: string; content: string; sections: EvidenceSection[]; origin: string; created_by: string; valid_from: string; recorded_at: string; sha256: string; etag: string; superseded_at: string | null }
 type Decision = { decision_id: string; version_id: string; version: number; title: string; status: string; valid_from: string; recorded_at: string; owner_id: string; approver_id: string | null; evidence_version_ids: string[]; etag: string }
 
 const examples = [
@@ -19,6 +20,14 @@ const examples = [
 async function message(response: Response): Promise<string> {
   try { const body: { title?: string } = await response.json(); return body.title || `Request failed (${response.status})` }
   catch { return `Request failed (${response.status})` }
+}
+
+function SourceExcerpt({ source, citation }: { source: Evidence; citation: Citation }) {
+  const section = source.sections.find(item => item.section_id === citation.section_id)
+  if (!section || citation.start_char < section.start_char || citation.end_char > section.end_char || source.content.slice(citation.start_char, citation.end_char) !== citation.quote) {
+    return <p className="error">The cited section could not be verified.</p>
+  }
+  return <div className="source-detail"><span className="eyebrow">AUTHORIZED SOURCE SECTION</span><h4>{section.title}</h4><p className="section-text">{source.content.slice(section.start_char, citation.start_char)}<mark>{citation.quote}</mark>{source.content.slice(citation.end_char, section.end_char)}</p><small>Section {section.section_id} · recorded {source.recorded_at} · valid from {source.valid_from} · SHA-256 {source.sha256.slice(0, 12)}…</small></div>
 }
 
 export default function App() {
@@ -39,7 +48,7 @@ export default function App() {
   const [selectedSource, setSelectedSource] = useState('')
   const [history, setHistory] = useState<WorkflowSource[]>([])
   const [sourceOrigin, setSourceOrigin] = useState('Fictional Cedar policy note')
-  const [sourceContent, setSourceContent] = useState('Manual overrides require three independent reviewers for Cedar invoices starting July 1.')
+  const [sourceContent, setSourceContent] = useState('# Cedar decision policy\n## Manual overrides\nManual overrides require three independent reviewers for Cedar invoices starting July 1.\n## Scope\nThis fictional policy applies to Cedar invoices.')
   const [sourceValidFrom, setSourceValidFrom] = useState('2026-07-01')
   const [decisionTitle, setDecisionTitle] = useState('Manual overrides require three reviewers from July 1')
   const [workflowNotice, setWorkflowNotice] = useState('')
@@ -184,7 +193,7 @@ export default function App() {
       const reviewed = await response.json() as Decision
       setWorkflowNotice(`Decision ${reviewed.status}. Ask again with a recorded-time cutoff after this review.`)
       if (action === 'approve') {
-        setQuestion(`What does the approved manual override policy require for ${session?.tenant} on ${reviewed.valid_from}?`)
+        setQuestion(reviewed.title.toLowerCase().includes('invoice hold') ? `Who approves ${session?.tenant} invoice holds on ${reviewed.valid_from}?` : `What does the approved manual override policy require for ${session?.tenant} on ${reviewed.valid_from}?`)
         setValidOn(reviewed.valid_from)
         setKnownAt(new Date(new Date(reviewed.recorded_at).getTime() + 1000).toISOString().slice(0, 19))
         setAnswer(null)
@@ -229,18 +238,19 @@ export default function App() {
         </form>
       </section>
       {(session.role === 'auditor' || session.role === 'owner') && <section className="panel workflow" aria-label="Evidence and decision workflow">
-        <div className="workflow-heading"><div><span className="eyebrow">V0.3 · GOVERNED WORKFLOW</span><h2>Take new evidence through review</h2></div><span className="badge">Local fictional data</span></div>
+        <div className="workflow-heading"><div><span className="eyebrow">V0.4 · STRUCTURED EVIDENCE</span><h2>Take new evidence through review</h2></div><span className="badge">Local fictional data</span></div>
         <p className="muted">Add a policy note, save a corrected version if needed, create a decision draft, then switch to a different Cedar auditor to approve it. The answer changes only after approval.</p>
+        <div className="button-row"><button type="button" className="quiet" onClick={() => { setSelectedSource(''); setHistory([]); setSourceOrigin('Fictional Cedar invoice-hold policy'); setSourceContent('# Cedar payment controls\n## Invoice holds\nInvoice holds require finance approval before release starting July 1.\n## Scope\nThis fictional policy applies to Cedar invoices.'); setSourceValidFrom('2026-07-01'); setDecisionTitle('Invoice holds require finance approval before release from July 1'); setQuestion('Who approves Cedar invoice holds on July 1?'); setValidOn('2026-07-01'); setAnswer(null) }}>Use invoice-hold example</button></div>
         <div className="workflow-grid">
           <div className="workflow-step"><span className="step-number">1</span><h3>Source and version</h3>
             <label>Existing source<select value={selectedSource} onChange={event => void selectSource(event.target.value)}><option value="">Create a new source</option>{sources.map(item => <option value={item.source_id} key={item.source_id}>{item.external_label} · {item.origin}</option>)}</select></label>
             <form onSubmit={event => { event.preventDefault(); void saveSource() }} className="workflow-form">
               <label>Origin<input value={sourceOrigin} onChange={event => setSourceOrigin(event.target.value)} maxLength={500} required /></label>
               <label>Policy valid from<input type="date" value={sourceValidFrom} onChange={event => setSourceValidFrom(event.target.value)} required /></label>
-              <label>Exact source text<textarea rows={4} value={sourceContent} onChange={event => setSourceContent(event.target.value)} minLength={15} maxLength={10000} required /></label>
+              <label>Exact source text with headings<textarea rows={6} value={sourceContent} onChange={event => setSourceContent(event.target.value)} minLength={15} maxLength={10000} required /></label>
               <div className="button-row"><button type="submit" disabled={busy}>Add source</button><button type="button" className="quiet" disabled={busy || !selectedSource} onClick={() => void saveSource(true)}>Save corrected version</button></div>
             </form>
-            {history.length > 0 && <div className="history"><strong>Source history</strong>{history.map(item => <div className="history-item" key={item.version_id}><small>{item.external_label} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {item.superseded_at ? 'earlier version' : 'current'}</small><p>{item.content}</p></div>)}</div>}
+            {history.length > 0 && <div className="history"><strong>Source history</strong>{history.map(item => <div className="history-item" key={item.version_id}><small>{item.external_label} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {item.superseded_at ? 'earlier version' : 'current'}</small><p className="section-text">{item.content}</p><small>Sections: {item.sections.map(section => section.title).join(' · ')}</small></div>)}</div>}
           </div>
           <div className="workflow-step"><span className="step-number">2</span><h3>Draft and review</h3>
             <label>Decision statement<input value={decisionTitle} onChange={event => setDecisionTitle(event.target.value)} maxLength={300} minLength={8} /></label>
@@ -258,8 +268,8 @@ export default function App() {
       {answer.conflict_summary && <p>{answer.conflict_summary}</p>}
       {answer.abstention_reason && <p>{answer.abstention_reason}</p>}
       {answer.claims.map((claim, claimIndex) => <article className="claim" key={`${answer.answer_id}-${claimIndex}`}><p>{claim.text}</p>{claim.decision_version_id && <small>Approved decision version {claim.decision_version_id.slice(0, 8)}</small>}<div className="citations">{claim.citations.map(citation => <div className="citation" key={citation.version_id}><button type="button" className="source-button" onClick={() => void open(citation)}>{citation.label} · open exact source</button><blockquote>{citation.quote}</blockquote>
-        {evidence[citation.version_id] && <div className="source-detail"><span className="eyebrow">AUTHORIZED SOURCE VERSION</span><p>{evidence[citation.version_id].content.slice(0, citation.start_char)}<mark>{evidence[citation.version_id].content.slice(citation.start_char, citation.end_char)}</mark>{evidence[citation.version_id].content.slice(citation.end_char)}</p><small>Recorded {evidence[citation.version_id].recorded_at} · valid from {evidence[citation.version_id].valid_from} · SHA-256 {evidence[citation.version_id].sha256.slice(0, 12)}…</small></div>}</div>)}</div></article>)}
-      <small>Source set: {answer.corpus_or_index_version}. This resolver quotes source sentences and abstains outside supported decision questions.</small>
+        {evidence[citation.version_id] && <SourceExcerpt source={evidence[citation.version_id]} citation={citation} />}</div>)}</div></article>)}
+      <small>Base corpus: {answer.corpus_or_index_version}; local authored evidence is versioned separately. This resolver quotes source sentences and abstains outside supported decision questions.</small>
     </section>}
     <p className="note">Local fictional data and shared demo credentials only. Authorization is enforced by the API for these demo identities; this is not production authentication or general question answering.</p>
   </main>

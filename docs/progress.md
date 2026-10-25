@@ -1,7 +1,13 @@
 # Progress
 
-**As of:** 2026-10-24
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; governed interactive v0.3 demo locally verified; full Phase 3 product gate open
+**As of:** 2026-10-25
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; structured-evidence v0.4 demo locally verified; full Phase 3 product gate open
+
+## 2026-10-25 structured v0.4 evidence
+
+- Added deterministic Markdown heading, transcript turn, and JSON leaf sections with exact source offsets and stable structural IDs. Authorized source responses expose section metadata; citations point to the containing section.
+- Added a second bounded reviewed topic for fictional invoice holds. The demo provides a prepared source and shows the highlighted exact section after independent approval.
+- Static checks and live smoke, original 25 seed cases, 14 v0.2 paraphrases, v0.3 workflow, and v0.4 structure/citation checks passed. Browser review completed the invoice-hold approval and citation flow. See `docs/release/v04-structured-evidence.md`.
 
 ## 2026-10-24 governed v0.3 workflow
 
@@ -43,7 +49,7 @@
 
 ## Next checkpoint
 
-Build an independently reviewed evaluation set and structured ingestion/security controls. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Build production-capable identity, file/connector intake with bounded chunks, and an independently reviewed evaluation set. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 
