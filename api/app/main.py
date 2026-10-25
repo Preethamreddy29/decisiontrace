@@ -125,7 +125,10 @@ def demo_login(login: LoginRequest, request: Request):
 
 
 @app.get("/demo/session")
-def demo_session(actor: Actor = Depends(require_actor)):
+def demo_session(request: Request):
+    if request.app.state.auth_mode != "demo":
+        raise HTTPException(status_code=404, detail="Demo session is disabled")
+    actor = require_actor(request)
     return {"account": actor.account, "tenant": actor.tenant, "role": actor.role}
 
 

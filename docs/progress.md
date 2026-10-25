@@ -3,6 +3,13 @@
 **As of:** 2026-10-25
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.5 identity/intake preview in verification; full Phase 3 product gate open
 
+## 2026-10-25 demo-test readiness follow-up
+
+- Added a fixed fictional invoice-hold file, a manual test guide, and one `python tools/demo_preflight.py` command. The command builds, seeds, runs the established checks, and leaves the local demo running.
+- File upload now prepares a matching invoice-hold decision statement and question, and resets the file picker after success.
+- The new live readiness check passes the full uploaded-file → independent approval → exact cited answer path and tenant denial, then cleans up its disposable records. A synthetic signed-token HTTP check passes OIDC-mode session, disabled demo endpoints, invalid-claim denial, and an authorized query.
+- The user can begin manual demo tests. Independent review of the 20 draft answer labels and an actual external identity provider test are still required before the full Phase 3 gate.
+
 ## 2026-10-25 v0.5 identity, intake, and evaluation preview
 
 - Added an optional OIDC mode that verifies RS256 access tokens against HTTPS JWKS, issuer, audience, expiry, signed tenant and role claims. Demo login is disabled in this mode. A real identity provider has not yet been exercised.

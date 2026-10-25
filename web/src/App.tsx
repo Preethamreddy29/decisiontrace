@@ -55,6 +55,7 @@ export default function App() {
   const [decisionTitle, setDecisionTitle] = useState('Manual overrides require three reviewers from July 1')
   const [workflowNotice, setWorkflowNotice] = useState('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadInputKey, setUploadInputKey] = useState(0)
   const [uploadKind, setUploadKind] = useState<'markdown' | 'transcript' | 'json'>('markdown')
 
   useEffect(() => {
@@ -195,8 +196,15 @@ export default function App() {
       if (!response.ok) throw new Error(await message(response))
       const saved = await response.json() as WorkflowSource
       setSelectedSource(saved.source_id); setSourceOrigin(saved.origin); setSourceContent(saved.content)
+      setSourceValidFrom(saved.valid_from)
+      if (/invoice holds?/i.test(saved.content) && /finance approval/i.test(saved.content)) {
+        setDecisionTitle(`Invoice holds require finance approval before release from ${saved.valid_from}`)
+        setQuestion(`Who approves ${session.tenant} invoice holds on ${saved.valid_from}?`)
+        setValidOn(saved.valid_from)
+        setAnswer(null)
+      }
       setWorkflowNotice(`${saved.external_label} uploaded and sectioned. Create a draft to review it.`)
-      setUploadFile(null)
+      setUploadFile(null); setUploadInputKey(current => current + 1)
       await refreshWorkflow()
       const historyResponse = await authorized(`/v1/sources/${saved.source_id}/versions`)
       if (historyResponse.ok) setHistory(await historyResponse.json() as WorkflowSource[])
@@ -289,7 +297,7 @@ export default function App() {
               <label>Exact source text with headings<textarea rows={6} value={sourceContent} onChange={event => setSourceContent(event.target.value)} minLength={15} maxLength={10000} required /></label>
               <div className="button-row"><button type="submit" disabled={busy}>Add source</button><button type="button" className="quiet" disabled={busy || !selectedSource} onClick={() => void saveSource(true)}>Save corrected version</button></div>
             </form>
-            <div className="history"><strong>Upload a UTF-8 file</strong><p className="muted">Markdown, transcript text, or JSON up to 32 KiB and 10,000 characters. The file is streamed into source versioning without using its name as a storage path.</p><div className="workflow-form"><label>File<input type="file" accept=".md,.txt,.json" onChange={event => setUploadFile(event.target.files?.[0] || null)} /></label><label>Format<select value={uploadKind} onChange={event => setUploadKind(event.target.value as typeof uploadKind)}><option value="markdown">Markdown</option><option value="transcript">Transcript</option><option value="json">JSON</option></select></label><button type="button" disabled={busy || !uploadFile} onClick={() => void uploadSource()}>Upload file</button></div></div>
+            <div className="history"><strong>Upload a UTF-8 file</strong><p className="muted">Markdown, transcript text, or JSON up to 32 KiB and 10,000 characters. The file is streamed into source versioning without using its name as a storage path.</p><div className="workflow-form"><label>File<input key={uploadInputKey} type="file" accept=".md,.txt,.json" onChange={event => setUploadFile(event.target.files?.[0] || null)} /></label><label>Format<select value={uploadKind} onChange={event => setUploadKind(event.target.value as typeof uploadKind)}><option value="markdown">Markdown</option><option value="transcript">Transcript</option><option value="json">JSON</option></select></label><button type="button" disabled={busy || !uploadFile} onClick={() => void uploadSource()}>Upload file</button></div></div>
             {history.length > 0 && <div className="history"><strong>Source history</strong>{history.map(item => <div className="history-item" key={item.version_id}><small>{item.external_label} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {item.superseded_at ? 'earlier version' : 'current'}</small><p className="section-text">{item.content}</p><small>Sections: {item.sections.map(section => section.title).join(' · ')}</small></div>)}</div>}
           </div>
           <div className="workflow-step"><span className="step-number">2</span><h3>Draft and review</h3>
