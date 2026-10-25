@@ -1,0 +1,9 @@
+# v0.5 independent answer-label review
+
+The frozen draft is [holdout_v05_draft.json](../../corpus/holdout_v05_draft.json) (SHA-256 `ca8e36a5c2de42250b9dc46b6a6812c692f85c4cadc67ade50d9dcf08fe0d1e9`). It contains 20 synthetic questions, each with an account, valid date, recorded cutoff, expected status, required source-version labels, and essential phrases. It was written by the implementation agent, so its current evaluation result is a **diagnostic**, not independent product-gate evidence.
+
+An independent reviewer should inspect the fictional source records in `corpus/sources.json` and the dates and roles in each case **without first viewing DecisionTrace output**. For each H01–H20, confirm or correct the expected status, required source labels, and required phrases. Pay particular attention to what was known at the recorded cutoff, what was effective on the valid date, whether the account could access a source, and whether a draft or test is authority. Record the reviewer's name or handle, review date, any corrected labels, and whether the full set is approved. Do not include secrets or real customer material.
+
+Save an approved copy as `corpus/holdout_v05_reviewed.json` with `"status": "independently-reviewed"` and a nonempty `"reviewer"` field. Run `python -m tools.eval_holdout_v05 --suite corpus/holdout_v05_reviewed.json` in the API container. The runner fails if any reviewed case misses expected status, required labels or phrases, or exact source citation. Keep corrections visible in a Git diff from the draft. A reviewer may also reject a case as ambiguous; replace it with a new independently labeled synthetic case before calling the gate complete.
+
+This review closes only the bounded 20-case evidence check. The roadmap's later 100+ question set and broad product evaluation remain separate.

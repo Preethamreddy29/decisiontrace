@@ -1,7 +1,13 @@
 # Progress
 
 **As of:** 2026-10-25
-**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; structured-evidence v0.4 demo locally verified; full Phase 3 product gate open
+**Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.5 identity/intake preview in verification; full Phase 3 product gate open
+
+## 2026-10-25 v0.5 identity, intake, and evaluation preview
+
+- Added an optional OIDC mode that verifies RS256 access tokens against HTTPS JWKS, issuer, audience, expiry, signed tenant and role claims. Demo login is disabled in this mode. A real identity provider has not yet been exercised.
+- Added bounded UTF-8 file upload and allowlisted, checksum-verified push-connector snapshots with tenant-scoped remote revision tracking. New source versions persist deterministic section chunks with offsets and hashes; query retrieval still scans authorized full source versions.
+- Added a 20-question draft evaluation set and a runner that checks status, expected labels and phrases, and exact authorized citation spans. It currently reports 20/20 on those measures, but the labels were authored by the implementation agent. The maintainer has offered to review them independently. See `docs/release/v05-review-packet.md` and `docs/release/v05-identity-intake-evaluation.md`.
 
 ## 2026-10-25 structured v0.4 evidence
 
@@ -43,13 +49,13 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- `/v1/query`, governed local text-source versions, decision review/history, and exact source GET are implemented for the bounded synthetic demo. File connectors, structured chunking, deletion, drift/evaluation operations, and other planned API operations remain open.
-- No production identity, model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
-- The remaining Phase 3 product work is broader independently reviewed answer evaluation, production identity, and the ingestion/security depth needed for a product gate.
+- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, and a stored chunk index are implemented for the bounded synthetic demo. General chunk retrieval, external pull connectors, deletion, drift/evaluation operations, and other planned API operations remain open.
+- An external-token verifier exists but has not been integrated with a real issuer or complete browser sign-in flow. No model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
+- The remaining Phase 3 product work is independent review of answer labels and a real identity-provider integration test. Broader product behavior and security depth continue in later phases.
 
 ## Next checkpoint
 
-Build production-capable identity, file/connector intake with bounded chunks, and an independently reviewed evaluation set. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Complete the independent label review, exercise the external identity configuration with a real issuer, and then decide whether the Phase 3 product gate is met. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 

@@ -38,6 +38,8 @@ jobs:
           docker compose --env-file .env.example exec -T api python -m tools.eval_v02
           docker compose --env-file .env.example exec -T api python -m tools.eval_v03
           docker compose --env-file .env.example exec -T api python -m tools.eval_v04
+          docker compose --env-file .env.example exec -T api python -m tools.eval_v05
+          docker compose --env-file .env.example exec -T api python -m tools.eval_holdout_v05
           curl --fail --silent http://127.0.0.1:8001/health/ready
           curl --fail --silent http://127.0.0.1:5174/
           python tools/verify_v02_contract.py

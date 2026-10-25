@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .auth import Actor
+from .auth import Actor, actor_scope
 from .db import connect
 from .seed import stable_id
 from .sections import parse_sections, section_for_span
@@ -246,10 +246,11 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
         raise HTTPException(status_code=422, detail="Invalid Idempotency-Key")
     payload = json.dumps(query.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    scoped_actor = actor_scope(actor)
     with connect(database_url) as connection:
         existing = connection.execute(
             "SELECT request_sha256, answer FROM query_requests WHERE actor_id = %s AND idempotency_key = %s",
-            (actor.account, key),
+            (scoped_actor, key),
         ).fetchone()
     if existing:
         if existing[0].strip() != digest:
@@ -268,13 +269,13 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
     answer = resolve(database_url, actor, query)
     with connect(database_url) as connection:
         connection.execute(
-            "INSERT INTO query_requests (actor_id, idempotency_key, request_sha256, answer) "
-            "VALUES (%s, %s, %s, %s::jsonb) ON CONFLICT DO NOTHING",
-            (actor.account, key, digest, json.dumps(answer)),
+            "INSERT INTO query_requests (actor_id, tenant_id, idempotency_key, request_sha256, answer) "
+            "VALUES (%s, %s, %s, %s, %s::jsonb) ON CONFLICT DO NOTHING",
+            (scoped_actor, stable_id(f"tenant/{actor.tenant}"), key, digest, json.dumps(answer)),
         )
         stored = connection.execute(
             "SELECT request_sha256, answer FROM query_requests WHERE actor_id = %s AND idempotency_key = %s",
-            (actor.account, key),
+            (scoped_actor, key),
         ).fetchone()
     if stored[0].strip() != digest:
         raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")

@@ -26,6 +26,11 @@ class Actor:
     role: str
 
 
+def actor_scope(actor: Actor) -> str:
+    """Keep idempotent responses separate across tenant and role changes."""
+    return f"{actor.tenant}\x1f{actor.role}\x1f{actor.account}"
+
+
 ACCOUNTS = {
     "cedar_auditor": Actor("cedar_auditor", "cedar", "auditor"),
     "cedar_reviewer": Actor("cedar_reviewer", "cedar", "auditor"),
@@ -88,5 +93,8 @@ def require_actor(request: Request) -> Actor:
     header = request.headers.get("Authorization", "")
     scheme, _, token = header.partition(" ")
     if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=401, detail="Demo session required")
+        raise HTTPException(status_code=401, detail="Bearer access token required")
+    if request.app.state.auth_mode == "oidc":
+        from .oidc import verify_oidc_token
+        return verify_oidc_token(token, request.app.state.oidc_config)
     return verify_token(token, request.app.state.demo_secret)

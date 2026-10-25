@@ -35,7 +35,13 @@ services:
       dockerfile: api/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      DEMO_PASSPHRASE: ${DEMO_PASSPHRASE:?set DEMO_PASSPHRASE}
+      DEMO_PASSPHRASE: ${DEMO_PASSPHRASE:-}
+      AUTH_MODE: ${AUTH_MODE:-demo}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
+      OIDC_ALLOWED_TENANTS: ${OIDC_ALLOWED_TENANTS:-}
+      CONNECTOR_IDS: ${CONNECTOR_IDS:-}
     ports:
       - "127.0.0.1:8001:8000"
     depends_on:

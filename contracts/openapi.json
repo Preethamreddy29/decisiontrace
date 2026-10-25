@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DecisionTrace first-slice API",
-    "version": "0.1.0",
-    "description": "Partial local contract. The synthetic v0.3 demo implements governed text-source versioning, decision draft/review/history, structured query, and exact source opening. Other operations remain planned. Tenant and role come from a server-verified demo token."
+    "version": "0.5.0-preview",
+    "description": "Partial local contract. Governed source versioning, bounded file and connector-snapshot intake, decision review, structured query, and exact citation opening are implemented. Tenant and role come from a server-verified demo token or a configured OIDC access token. Other operations remain planned."
   },
   "servers": [
     {
@@ -16,6 +16,40 @@
     }
   ],
   "paths": {
+    "/v1/session": {
+      "get": {
+        "operationId": "getCurrentSession",
+        "summary": "Resolve the verified account, tenant, and role",
+        "responses": {"200": {"description": "Current verified identity"}, "401": {"description": "Invalid bearer token"}}
+      }
+    },
+    "/v1/sources/upload": {
+      "post": {
+        "operationId": "uploadSourceFile",
+        "summary": "Stream a bounded UTF-8 Markdown, transcript, or JSON file into governed source versioning",
+        "parameters": [
+          {"name": "kind", "in": "query", "required": true, "schema": {"type": "string", "enum": ["markdown", "transcript", "json"]}},
+          {"name": "valid_from", "in": "query", "required": true, "schema": {"type": "string", "format": "date"}},
+          {"name": "permissions", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "X-Source-Filename", "in": "header", "required": true, "schema": {"type": "string"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}, "text/plain": {"schema": {"type": "string", "format": "binary"}}, "text/markdown": {"schema": {"type": "string", "format": "binary"}}, "application/json": {"schema": {"type": "string", "format": "binary"}}}},
+        "responses": {"201": {"description": "Governed source version", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SourceVersion"}}}}, "413": {"description": "File too large"}, "422": {"description": "Invalid file or metadata"}}
+      }
+    },
+    "/v1/connectors/{connector_id}/snapshots": {
+      "post": {
+        "operationId": "pushConnectorSnapshot",
+        "summary": "Push a checksummed revision from an enabled connector",
+        "parameters": [
+          {"name": "connector_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectorSnapshot"}}}},
+        "responses": {"201": {"description": "Current immutable source version", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SourceVersion"}}}}, "403": {"description": "Connector or identity not allowed"}, "409": {"description": "Remote revision conflict"}, "422": {"description": "Invalid checksum or metadata"}}
+      }
+    },
     "/v1/sources": {
       "post": {
         "operationId": "createSource",
@@ -1286,6 +1320,17 @@
           "request_id": {
             "type": "string"
           }
+        }
+      },
+      "ConnectorSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["remote_id", "remote_version", "sha256", "source"],
+        "properties": {
+          "remote_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,120}$"},
+          "remote_version": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,120}$"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "source": {"$ref": "#/components/schemas/SourceCreate"}
         }
       },
       "SourceCreate": {

@@ -32,8 +32,10 @@ function SourceExcerpt({ source, citation }: { source: Evidence; citation: Citat
 
 export default function App() {
   const [ready, setReady] = useState('Checking…')
+  const [authMode, setAuthMode] = useState<'demo' | 'oidc'>('demo')
   const [account, setAccount] = useState('cedar_auditor')
   const [passphrase, setPassphrase] = useState('')
+  const [accessToken, setAccessToken] = useState('')
   const [session, setSession] = useState<Session | null>(null)
   const [question, setQuestion] = useState(examples[0].question)
   const [validOn, setValidOn] = useState(examples[0].valid)
@@ -52,11 +54,17 @@ export default function App() {
   const [sourceValidFrom, setSourceValidFrom] = useState('2026-07-01')
   const [decisionTitle, setDecisionTitle] = useState('Manual overrides require three reviewers from July 1')
   const [workflowNotice, setWorkflowNotice] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadKind, setUploadKind] = useState<'markdown' | 'transcript' | 'json'>('markdown')
 
   useEffect(() => {
     void fetch('/api/health/ready', { cache: 'no-store' })
       .then(response => setReady(response.ok ? 'Ready' : 'Unavailable'))
       .catch(() => setReady('Unavailable'))
+    void fetch('/api/version', { cache: 'no-store' })
+      .then(response => response.json())
+      .then((data: { auth_mode?: string }) => setAuthMode(data.auth_mode === 'oidc' ? 'oidc' : 'demo'))
+      .catch(() => setAuthMode('demo'))
   }, [])
 
   useEffect(() => { if (session) void refreshWorkflow(session) }, [session])
@@ -92,9 +100,19 @@ export default function App() {
   async function login(event: FormEvent) {
     event.preventDefault(); setError(''); setBusy(true)
     try {
-      const response = await fetch('/api/demo/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ account, passphrase }) })
-      if (!response.ok) throw new Error(await message(response))
-      setSession(await response.json() as Session); setPassphrase(''); setAnswer(null); setEvidence({})
+      if (authMode === 'oidc') {
+        const token = accessToken.trim()
+        const response = await fetch('/api/v1/session', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+        if (!response.ok) throw new Error(await message(response))
+        const identity = await response.json() as Omit<Session, 'access_token'>
+        setSession({ ...identity, access_token: token })
+        setAccessToken('')
+      } else {
+        const response = await fetch('/api/demo/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ account, passphrase }) })
+        if (!response.ok) throw new Error(await message(response))
+        setSession(await response.json() as Session); setPassphrase('')
+      }
+      setAnswer(null); setEvidence({})
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Login failed') }
     finally { setBusy(false) }
   }
@@ -164,6 +182,28 @@ export default function App() {
     finally { setBusy(false) }
   }
 
+  async function uploadSource() {
+    if (!session || !uploadFile) return
+    if (uploadFile.size > 32768) { setError('Choose a UTF-8 file no larger than 32 KiB'); return }
+    setBusy(true); setError(''); setWorkflowNotice('')
+    try {
+      const params = new URLSearchParams({ kind: uploadKind, valid_from: sourceValidFrom, permissions: 'auditor,owner' })
+      const response = await authorized(`/v1/sources/upload?${params}`, {
+        method: 'POST', body: uploadFile,
+        headers: { 'Content-Type': 'application/octet-stream', 'X-Source-Filename': uploadFile.name, 'Idempotency-Key': crypto.randomUUID() },
+      })
+      if (!response.ok) throw new Error(await message(response))
+      const saved = await response.json() as WorkflowSource
+      setSelectedSource(saved.source_id); setSourceOrigin(saved.origin); setSourceContent(saved.content)
+      setWorkflowNotice(`${saved.external_label} uploaded and sectioned. Create a draft to review it.`)
+      setUploadFile(null)
+      await refreshWorkflow()
+      const historyResponse = await authorized(`/v1/sources/${saved.source_id}/versions`)
+      if (historyResponse.ok) setHistory(await historyResponse.json() as WorkflowSource[])
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not upload source') }
+    finally { setBusy(false) }
+  }
+
   async function createDraft() {
     if (!session) return
     const current = sources.find(item => item.source_id === selectedSource)
@@ -218,16 +258,15 @@ export default function App() {
     <p className="intro">Choose when a policy applied and what had been recorded by then. Every returned claim opens its exact source version.</p>
     <div className="status-card"><span>Local service</span><strong>{ready}</strong></div>
 
-    {!session ? <section className="panel" aria-label="Demo sign in">
-      <h2>Enter the local demo</h2>
-      <p className="muted">These are fictional test identities. The shared local passphrase is <code>local-demo-only</code>.</p>
+    {!session ? <section className="panel" aria-label="Sign in">
+      <h2>{authMode === 'demo' ? 'Enter the local demo' : 'Connect your identity'}</h2>
+      <p className="muted">{authMode === 'demo' ? <>These are fictional test identities. The shared local passphrase is <code>local-demo-only</code>.</> : 'Use an access token issued for this API by the configured identity provider. The token stays in this page session.'}</p>
       <form onSubmit={event => void login(event)} className="login-form">
-        <label>Demo identity<select value={account} onChange={event => setAccount(event.target.value)}><option value="cedar_auditor">Cedar author / auditor</option><option value="cedar_reviewer">Cedar independent reviewer</option><option value="cedar_viewer">Cedar viewer</option><option value="lumen_auditor">Lumen auditor</option></select></label>
-        <label>Passphrase<input type="password" value={passphrase} onChange={event => setPassphrase(event.target.value)} required /></label>
-        <button type="submit" disabled={busy}>Enter demo</button>
+        {authMode === 'demo' ? <><label>Demo identity<select value={account} onChange={event => setAccount(event.target.value)}><option value="cedar_auditor">Cedar author / auditor</option><option value="cedar_reviewer">Cedar independent reviewer</option><option value="cedar_viewer">Cedar viewer</option><option value="lumen_auditor">Lumen auditor</option></select></label><label>Passphrase<input type="password" value={passphrase} onChange={event => setPassphrase(event.target.value)} required /></label></> : <label>OIDC access token<input type="password" value={accessToken} onChange={event => setAccessToken(event.target.value)} required autoComplete="off" /></label>}
+        <button type="submit" disabled={busy}>{authMode === 'demo' ? 'Enter demo' : 'Connect'}</button>
       </form>
     </section> : <>
-      <section className="identity"><div><span className="eyebrow">SIGNED-IN DEMO IDENTITY</span><strong>{session.tenant} · {session.role} · {session.account}</strong></div><button type="button" className="quiet" onClick={() => { setSession(null); setAnswer(null); setEvidence({}); setSources([]); setDecisions([]); setDecisionHistory({}); setHistory([]); setSelectedSource(''); setError('') }}>Switch identity</button></section>
+      <section className="identity"><div><span className="eyebrow">VERIFIED IDENTITY</span><strong>{session.tenant} · {session.role} · {session.account}</strong></div><button type="button" className="quiet" onClick={() => { setSession(null); setAnswer(null); setEvidence({}); setSources([]); setDecisions([]); setDecisionHistory({}); setHistory([]); setSelectedSource(''); setError('') }}>Switch identity</button></section>
       <section className="panel" aria-label="Decision query">
         <h2>Trace a decision</h2>
         <div className="examples" role="group" aria-label="Example questions">{examples.map((item, index) => <button type="button" className="chip" key={item.label} onClick={() => choose(index)}>{item.label}</button>)}</div>
@@ -238,7 +277,7 @@ export default function App() {
         </form>
       </section>
       {(session.role === 'auditor' || session.role === 'owner') && <section className="panel workflow" aria-label="Evidence and decision workflow">
-        <div className="workflow-heading"><div><span className="eyebrow">V0.4 · STRUCTURED EVIDENCE</span><h2>Take new evidence through review</h2></div><span className="badge">Local fictional data</span></div>
+        <div className="workflow-heading"><div><span className="eyebrow">V0.5 · GOVERNED INTAKE</span><h2>Take new evidence through review</h2></div><span className="badge">Local fictional data</span></div>
         <p className="muted">Add a policy note, save a corrected version if needed, create a decision draft, then switch to a different Cedar auditor to approve it. The answer changes only after approval.</p>
         <div className="button-row"><button type="button" className="quiet" onClick={() => { setSelectedSource(''); setHistory([]); setSourceOrigin('Fictional Cedar invoice-hold policy'); setSourceContent('# Cedar payment controls\n## Invoice holds\nInvoice holds require finance approval before release starting July 1.\n## Scope\nThis fictional policy applies to Cedar invoices.'); setSourceValidFrom('2026-07-01'); setDecisionTitle('Invoice holds require finance approval before release from July 1'); setQuestion('Who approves Cedar invoice holds on July 1?'); setValidOn('2026-07-01'); setAnswer(null) }}>Use invoice-hold example</button></div>
         <div className="workflow-grid">
@@ -250,6 +289,7 @@ export default function App() {
               <label>Exact source text with headings<textarea rows={6} value={sourceContent} onChange={event => setSourceContent(event.target.value)} minLength={15} maxLength={10000} required /></label>
               <div className="button-row"><button type="submit" disabled={busy}>Add source</button><button type="button" className="quiet" disabled={busy || !selectedSource} onClick={() => void saveSource(true)}>Save corrected version</button></div>
             </form>
+            <div className="history"><strong>Upload a UTF-8 file</strong><p className="muted">Markdown, transcript text, or JSON up to 32 KiB and 10,000 characters. The file is streamed into source versioning without using its name as a storage path.</p><div className="workflow-form"><label>File<input type="file" accept=".md,.txt,.json" onChange={event => setUploadFile(event.target.files?.[0] || null)} /></label><label>Format<select value={uploadKind} onChange={event => setUploadKind(event.target.value as typeof uploadKind)}><option value="markdown">Markdown</option><option value="transcript">Transcript</option><option value="json">JSON</option></select></label><button type="button" disabled={busy || !uploadFile} onClick={() => void uploadSource()}>Upload file</button></div></div>
             {history.length > 0 && <div className="history"><strong>Source history</strong>{history.map(item => <div className="history-item" key={item.version_id}><small>{item.external_label} · recorded {item.recorded_at.replace('T', ' ').slice(0, 16)} UTC · {item.superseded_at ? 'earlier version' : 'current'}</small><p className="section-text">{item.content}</p><small>Sections: {item.sections.map(section => section.title).join(' · ')}</small></div>)}</div>}
           </div>
           <div className="workflow-step"><span className="step-number">2</span><h3>Draft and review</h3>
@@ -271,6 +311,6 @@ export default function App() {
         {evidence[citation.version_id] && <SourceExcerpt source={evidence[citation.version_id]} citation={citation} />}</div>)}</div></article>)}
       <small>Base corpus: {answer.corpus_or_index_version}; local authored evidence is versioned separately. This resolver quotes source sentences and abstains outside supported decision questions.</small>
     </section>}
-    <p className="note">Local fictional data and shared demo credentials only. Authorization is enforced by the API for these demo identities; this is not production authentication or general question answering.</p>
+    <p className="note">{authMode === 'demo' ? 'Local fictional data and shared demo credentials only.' : 'External identity mode verifies signed access tokens and requires issuer-managed tenant and role claims.'} This bounded resolver is not general question answering.</p>
   </main>
 }

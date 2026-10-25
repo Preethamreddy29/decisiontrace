@@ -7,6 +7,7 @@ from uuid import NAMESPACE_URL, uuid5
 
 from .config import load_settings
 from .db import connect
+from .indexing import index_source
 
 
 CORPUS_PATH = Path(__file__).resolve().parents[2] / "corpus" / "sources.json"
@@ -41,6 +42,7 @@ def seed() -> None:
                     "AND (external_label IS NULL OR external_label = %s)",
                     (item["id"], source_version_id, item["id"]),
                 )
+                index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
                 continue
             connection.execute(
                 "INSERT INTO source_versions "
@@ -57,6 +59,7 @@ def seed() -> None:
                     item.get("superseded_at"), item["id"],
                 ),
             )
+            index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
 
 
 if __name__ == "__main__":

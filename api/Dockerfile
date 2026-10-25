@@ -12,6 +12,8 @@ COPY tools/eval_demo.py /workspace/tools/eval_demo.py
 COPY tools/eval_v02.py /workspace/tools/eval_v02.py
 COPY tools/eval_v03.py /workspace/tools/eval_v03.py
 COPY tools/eval_v04.py /workspace/tools/eval_v04.py
+COPY tools/eval_v05.py /workspace/tools/eval_v05.py
+COPY tools/eval_holdout_v05.py /workspace/tools/eval_holdout_v05.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
