@@ -42,7 +42,11 @@ def seed() -> None:
                     "AND (external_label IS NULL OR external_label = %s)",
                     (item["id"], source_version_id, item["id"]),
                 )
-                index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
+                if item.get("revoked_at"):
+                    connection.execute("DELETE FROM source_chunks WHERE tenant_id = %s AND source_version_id = %s",
+                                       (stable_id(f"tenant/{item['tenant']}"), source_version_id))
+                else:
+                    index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
                 continue
             connection.execute(
                 "INSERT INTO source_versions "
@@ -59,7 +63,8 @@ def seed() -> None:
                     item.get("superseded_at"), item["id"],
                 ),
             )
-            index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
+            if not item.get("revoked_at"):
+                index_source(connection, stable_id(f"tenant/{item['tenant']}"), source_version_id, item["kind"], item["text"])
 
 
 if __name__ == "__main__":

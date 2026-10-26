@@ -55,6 +55,11 @@ def main() -> None:
             "WHERE c.content_text <> substring(s.content from c.start_char + 1 for c.end_char - c.start_char)"
         ).fetchone()[0]
         assert mismatch == 0, mismatch
+        revoked_chunks = connection.execute(
+            "SELECT count(*) FROM source_chunks WHERE source_version_id = %s",
+            (stable_id("version/SRC-REVOKED-001-v1"),),
+        ).fetchone()[0]
+        assert revoked_chunks == 0, revoked_chunks
     print("Full-text search passed: exact chunks, historical correction, valid time, tenant, role, and revocation.")
 
 

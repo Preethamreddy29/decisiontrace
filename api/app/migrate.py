@@ -40,6 +40,13 @@ def migrate() -> None:
                 (path.name, digest),
             )
             connection.commit()
+        # Revoked evidence must never remain in the searchable chunk index.
+        if connection.execute("SELECT to_regclass('source_chunks')").fetchone()[0] is not None:
+            connection.execute(
+                "DELETE FROM source_chunks c USING source_versions s "
+                "WHERE c.tenant_id = s.tenant_id AND c.source_version_id = s.id AND s.revoked_at IS NOT NULL"
+            )
+            connection.commit()
         # Backfill only source versions that predate the persisted chunk index.
         if connection.execute("SELECT to_regclass('source_chunks')").fetchone()[0] is not None:
             rows = connection.execute(
