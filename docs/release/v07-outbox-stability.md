@@ -10,6 +10,7 @@
 - Migration `007_outbox_version.sql` adds a version column to existing outbox rows. `contracts/events.schema.json` now describes the actual local outbox envelope; a future RuleTwin integration event contract will be separate.
 - `tools/replay_outbox.py` lists valid current dead letters without changing them. `--apply` requeues only events that pass the current registry and payload check. Attempts remain recorded.
 - `tools/eval_v07_outbox.py` checks every current event type, malformed and future events, unknown types, expired leases, and safe replay. It runs in the demo preflight and GitHub CI.
+- Evidence queries and exact-source opening take a shared tenant lock through their read and answer-cache transaction. Protected mutations take the exclusive lock before changing evidence. This orders source revocation and corrections against in-flight answers; `tools/eval_v07_concurrency.py` checks both lock directions and post-revocation denial.
 
 ## Local replay after upgrading
 
@@ -29,4 +30,4 @@ The worker will acknowledge requeued events. Unknown or malformed records remain
 
 ## Remaining Stage A work
 
-Exercise the current UI manually, test revocation during concurrent reads and after backup/restore, and record a clean live stack run. Stage B then adds the planned search/model/storage/telemetry foundation. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/decisiontrace-status/docs/05_DECISIONTRACE_COMPLETION_PLAN.md).
+Exercise the current UI manually, test revocation after backup/restore, and record a clean local live stack run. Stage B then adds the planned search/model/storage/telemetry foundation. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/decisiontrace-status/docs/05_DECISIONTRACE_COMPLETION_PLAN.md).

@@ -19,6 +19,7 @@ from .auth import Actor, actor_scope
 from .db import connect
 from .seed import stable_id
 from .sections import parse_sections, section_for_span
+from .locks import evidence_lock_key
 
 
 CORPUS_VERSION = "dt-synthetic-v0.1"
@@ -248,26 +249,26 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
     scoped_actor = actor_scope(actor)
     with connect(database_url) as connection:
+        connection.execute("SELECT pg_advisory_xact_lock_shared(%s)", (evidence_lock_key(actor),))
         existing = connection.execute(
             "SELECT request_sha256, answer FROM query_requests WHERE actor_id = %s AND idempotency_key = %s",
             (scoped_actor, key),
         ).fetchone()
-    if existing:
-        if existing[0].strip() != digest:
-            raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
-        current = {s.version_id: s for s in visible_sources(database_url, actor, query.recorded_as_of, query.source_ids)}
-        if any(
-            c["version_id"] not in current or
-            current[c["version_id"]].content[c["start_char"]:c["end_char"]] != c["quote"] or
-            section_for_span(current[c["version_id"]].kind, current[c["version_id"]].content,
-                             c["start_char"], c["end_char"]).section_id != c["section_id"]
-            for claim in existing[1]["claims"] for c in claim["citations"]
-        ):
-            raise HTTPException(status_code=409, detail="Stored answer references evidence that is no longer available")
-        return existing[1]
+        if existing:
+            if existing[0].strip() != digest:
+                raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
+            current = {s.version_id: s for s in visible_sources(database_url, actor, query.recorded_as_of, query.source_ids)}
+            if any(
+                c["version_id"] not in current or
+                current[c["version_id"]].content[c["start_char"]:c["end_char"]] != c["quote"] or
+                section_for_span(current[c["version_id"]].kind, current[c["version_id"]].content,
+                                 c["start_char"], c["end_char"]).section_id != c["section_id"]
+                for claim in existing[1]["claims"] for c in claim["citations"]
+            ):
+                raise HTTPException(status_code=409, detail="Stored answer references evidence that is no longer available")
+            return existing[1]
 
-    answer = resolve(database_url, actor, query)
-    with connect(database_url) as connection:
+        answer = resolve(database_url, actor, query)
         connection.execute(
             "INSERT INTO query_requests (actor_id, tenant_id, idempotency_key, request_sha256, answer) "
             "VALUES (%s, %s, %s, %s, %s::jsonb) ON CONFLICT DO NOTHING",
@@ -277,21 +278,23 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
             "SELECT request_sha256, answer FROM query_requests WHERE actor_id = %s AND idempotency_key = %s",
             (scoped_actor, key),
         ).fetchone()
-    if stored[0].strip() != digest:
-        raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
-    return stored[1]
+        if stored[0].strip() != digest:
+            raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
+        return stored[1]
 
 
 def open_evidence(database_url: str, actor: Actor, source_id: UUID, version_id: UUID, as_of: datetime) -> dict | None:
-    for source in visible_sources(database_url, actor, as_of):
-        if source.source_id == str(source_id) and source.version_id == str(version_id):
-            return {
-                "source_id": source.source_id, "version_id": source.version_id,
-                "external_label": source.label, "version": source.version, "kind": source.kind,
-                "sha256": source.sha256, "recorded_at": source.recorded_at.isoformat(),
-                "valid_from": source.valid_from.isoformat(),
-                "valid_to": source.valid_to.isoformat() if source.valid_to else None,
-                "status": source.status, "content": source.content,
-                "sections": [section.as_dict() for section in parse_sections(source.kind, source.content)],
-            }
+    with connect(database_url) as gate:
+        gate.execute("SELECT pg_advisory_xact_lock_shared(%s)", (evidence_lock_key(actor),))
+        for source in visible_sources(database_url, actor, as_of):
+            if source.source_id == str(source_id) and source.version_id == str(version_id):
+                return {
+                    "source_id": source.source_id, "version_id": source.version_id,
+                    "external_label": source.label, "version": source.version, "kind": source.kind,
+                    "sha256": source.sha256, "recorded_at": source.recorded_at.isoformat(),
+                    "valid_from": source.valid_from.isoformat(),
+                    "valid_to": source.valid_to.isoformat() if source.valid_to else None,
+                    "status": source.status, "content": source.content,
+                    "sections": [section.as_dict() for section in parse_sections(source.kind, source.content)],
+                }
     return None

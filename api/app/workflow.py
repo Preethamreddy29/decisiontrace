@@ -16,6 +16,7 @@ from .seed import stable_id
 from .sections import parse_sections
 from .indexing import index_source
 from .events import EVENT_TYPES
+from .locks import evidence_lock_key
 
 
 KEY_PATTERN = re.compile(r"[A-Za-z0-9._-]{8,128}\Z")
@@ -106,6 +107,7 @@ def _mutation(database_url: str, actor: Actor, operation: str, key: str, request
     scoped_actor = actor_scope(actor)
     lock_value = int.from_bytes(hashlib.sha256(f"{scoped_actor}/{operation}/{key}".encode()).digest()[:8], "big", signed=True)
     with connect(database_url) as connection:
+        connection.execute("SELECT pg_advisory_xact_lock(%s)", (evidence_lock_key(actor),))
         connection.execute("SELECT pg_advisory_xact_lock(%s)", (lock_value,))
         prior = connection.execute(
             "SELECT request_sha256, response FROM mutation_requests "

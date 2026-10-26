@@ -23,6 +23,7 @@ def main() -> None:
         "tools.eval_v03", "tools.eval_v04", "tools.eval_v05",
         "tools.eval_holdout_v05", "tools.eval_demo_readiness", "tools.eval_oidc_route",
         "tools.eval_v06_revocation", "tools.eval_v06_watches", "tools.eval_v07_outbox",
+        "tools.eval_v07_concurrency",
     ):
         run(*COMPOSE, "exec", "-T", "api", "python", "-m", module)
     print("Demo preflight passed. Open http://127.0.0.1:5174/ and follow docs/release/demo-test-guide.md.")
