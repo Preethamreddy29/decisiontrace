@@ -20,9 +20,12 @@ def smoke() -> None:
         seeded = connection.execute("SELECT count(*) FROM source_versions WHERE external_label LIKE 'SRC-%'").fetchone()[0]
         migrations = connection.execute("SELECT count(*) FROM schema_migrations").fetchone()[0]
         chunks = connection.execute("SELECT count(*) FROM source_chunks").fetchone()[0]
+        indexable = connection.execute(
+            "SELECT count(*) FROM source_versions WHERE external_label LIKE 'SRC-%' AND revoked_at IS NULL"
+        ).fetchone()[0]
         expected_migrations = len(list(MIGRATIONS.glob("[0-9][0-9][0-9]_*.sql")))
-        if tenants != 2 or sources < 14 or seeded != 14 or migrations != expected_migrations or chunks < 14:
-            raise RuntimeError(f"unexpected foundation counts: {(tenants, sources, seeded, migrations)}")
+        if tenants != 2 or sources < 14 or seeded != 14 or migrations != expected_migrations or chunks < indexable:
+            raise RuntimeError(f"unexpected foundation counts: {(tenants, sources, seeded, migrations, chunks, indexable)}")
         event_id = uuid4()
         connection.execute(
             "INSERT INTO outbox_events (id, tenant_id, event_type, payload) "
