@@ -15,6 +15,7 @@ from .db import connect
 from .seed import stable_id
 from .sections import parse_sections
 from .indexing import index_source
+from .events import EVENT_TYPES
 
 
 KEY_PATTERN = re.compile(r"[A-Za-z0-9._-]{8,128}\Z")
@@ -125,6 +126,8 @@ def _mutation(database_url: str, actor: Actor, operation: str, key: str, request
 
 
 def _audit(connection, actor: Actor, action: str, subject_id: UUID, detail: dict):
+    if action not in EVENT_TYPES:
+        raise ValueError(f"unregistered outbox event: {action}")
     tenant_id = stable_id(f"tenant/{actor.tenant}")
     connection.execute(
         "INSERT INTO audit_events (id, tenant_id, actor_id, action, subject_id, detail) "

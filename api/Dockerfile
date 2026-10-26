@@ -18,6 +18,8 @@ COPY tools/eval_demo_readiness.py /workspace/tools/eval_demo_readiness.py
 COPY tools/eval_oidc_route.py /workspace/tools/eval_oidc_route.py
 COPY tools/eval_v06_revocation.py /workspace/tools/eval_v06_revocation.py
 COPY tools/eval_v06_watches.py /workspace/tools/eval_v06_watches.py
+COPY tools/replay_outbox.py /workspace/tools/replay_outbox.py
+COPY tools/eval_v07_outbox.py /workspace/tools/eval_v07_outbox.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

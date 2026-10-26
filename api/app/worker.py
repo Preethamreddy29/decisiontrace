@@ -1,10 +1,11 @@
-"""Lease-based local outbox delivery for foundation and demo audit events."""
+"""Lease-based local validation and acknowledgement of current outbox events."""
 
 import logging
 import time
 
 from .config import load_settings
 from .db import connect
+from .events import valid_event
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -14,7 +15,7 @@ logger = logging.getLogger("decisiontrace.worker")
 def claim_once(database_url: str):
     with connect(database_url) as connection:
         row = connection.execute(
-            "SELECT id, event_type FROM outbox_events "
+            "SELECT id, event_type, event_version, payload FROM outbox_events "
             "WHERE state = 'pending' OR (state = 'leased' AND lease_until < now()) "
             "ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1"
         ).fetchone()
@@ -28,9 +29,8 @@ def claim_once(database_url: str):
         return row
 
 
-def finish(database_url: str, event_id, event_type: str) -> None:
-    supported = {"foundation.ping", "source.created", "source.versioned", "decision.drafted", "decision.reviewed"}
-    state = "done" if event_type in supported else "dead_letter"
+def finish(database_url: str, event_id, event_type: str, event_version: int, payload: object) -> None:
+    state = "done" if valid_event(event_type, event_version, payload) else "dead_letter"
     with connect(database_url) as connection:
         connection.execute(
             "UPDATE outbox_events SET state = %s, lease_until = NULL "
@@ -48,7 +48,7 @@ def run() -> None:
         try:
             item = claim_once(database_url)
             if item:
-                finish(database_url, item[0], item[1])
+                finish(database_url, item[0], item[1], item[2], item[3])
             else:
                 time.sleep(2)
         except Exception:

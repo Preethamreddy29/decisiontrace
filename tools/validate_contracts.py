@@ -7,10 +7,15 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from api.app.events import EVENT_TYPES, EVENT_VERSION, valid_event
+
+
 CONTRACTS = ROOT / "contracts"
 
 
@@ -64,7 +69,15 @@ def check() -> None:
                 resolve(document, node["$ref"])
     if set(api["components"]["schemas"]["Answer"]["properties"]["status"]["enum"]) != {"answered", "conflict", "abstain", "denied"}:
         raise ValueError("answer status contract diverges from the gold set")
-    print(f"Structural contract checks passed: {len(operations)} API operations and 2 event types.")
+    if set(events["properties"]["event_type"]["enum"]) != EVENT_TYPES:
+        raise ValueError("outbox schema and worker event registry disagree")
+    if events["properties"]["event_version"]["const"] != EVENT_VERSION:
+        raise ValueError("outbox schema and worker event version disagree")
+    if not valid_event("source.revoked", 1, {"subject_id": "00000000-0000-0000-0000-000000000001"}):
+        raise ValueError("current source event must validate")
+    if valid_event("source.revoked", 2, {"subject_id": "00000000-0000-0000-0000-000000000001"}):
+        raise ValueError("future event version must be rejected")
+    print(f"Structural contract checks passed: {len(operations)} API operations and {len(EVENT_TYPES)} local event types.")
 
 
 if __name__ == "__main__":

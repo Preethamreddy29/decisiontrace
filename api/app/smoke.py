@@ -19,7 +19,7 @@ def smoke() -> None:
         seeded = connection.execute("SELECT count(*) FROM source_versions WHERE external_label LIKE 'SRC-%'").fetchone()[0]
         migrations = connection.execute("SELECT count(*) FROM schema_migrations").fetchone()[0]
         chunks = connection.execute("SELECT count(*) FROM source_chunks").fetchone()[0]
-        if tenants != 2 or sources < 14 or seeded != 14 or migrations != 6 or chunks < 14:
+        if tenants != 2 or sources < 14 or seeded != 14 or migrations != 7 or chunks < 14:
             raise RuntimeError(f"unexpected foundation counts: {(tenants, sources, seeded, migrations)}")
         event_id = uuid4()
         connection.execute(
@@ -34,7 +34,7 @@ def smoke() -> None:
                 "SELECT state FROM outbox_events WHERE id = %s", (event_id,)
             ).fetchone()[0]
         if state == "done":
-            print("Foundation smoke passed: 2 tenants, 14 seeded source versions, 6 migrations, bounded chunks, worker delivery.")
+            print("Foundation smoke passed: 2 tenants, 14 seeded source versions, 7 migrations, bounded chunks, worker acknowledgement.")
             return
         if state == "dead_letter":
             raise RuntimeError("foundation ping was rejected by worker")
