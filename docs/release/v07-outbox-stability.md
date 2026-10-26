@@ -12,6 +12,10 @@
 - `tools/eval_v07_outbox.py` checks every current event type, malformed and future events, unknown types, expired leases, and safe replay. It runs in the demo preflight and GitHub CI.
 - Evidence queries and exact-source opening take a shared tenant lock through their read and answer-cache transaction. Protected mutations take the exclusive lock before changing evidence. This orders source revocation and corrections against in-flight answers; `tools/eval_v07_concurrency.py` checks both lock directions and post-revocation denial.
 
+## Verification
+
+The [outbox CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40367001560) passed at `55df80e`. The [concurrent evidence-read/revocation CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40384037661) passed at `b8d104c`.
+
 ## Local replay after upgrading
 
 First run `python tools/demo_preflight.py` to apply the migration and start the stack. Inspect eligible events with:

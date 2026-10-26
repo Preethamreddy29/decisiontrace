@@ -10,6 +10,10 @@
 - The retrieval call holds a shared tenant evidence lock, so a concurrent revocation cannot commit between candidate selection and return.
 - The live check covers historical correction, valid-time expiry, tenant and role isolation, revoked evidence, exact offsets, and empty source scope. It is included in CI and demo preflight.
 
+## Verification
+
+The static suite passed locally. The fresh-stack [CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40385287627) passed the seed, worker, historical answer suites, and the new live full-text search check at commit `4534e89`. The foundation smoke now derives its expected migration count from the migration files. Local Docker was unavailable for a second live run.
+
 ## Still open in Stage B
 
 pgvector and pinned embedding/reranking profiles, hybrid fusion, artifact storage abstraction, model/config registry, stage telemetry, resumable ingestion, and a full index rebuild procedure remain. Search hits are candidate evidence only; approval and claim verification are separate work in Stage C. No public search endpoint or new answer behavior is claimed here.
