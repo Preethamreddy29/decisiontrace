@@ -1,7 +1,13 @@
 # Progress
 
-**As of:** 2026-10-25
+**As of:** 2026-10-27
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-10-27 Stage A verification and Stage B full-text slice
+
+- The outbox registry, event-version migration, worker validation, safe replay tool, and live event checks passed CI at commit `55df80e`. The concurrent evidence-read/revocation ordering fix passed CI at commit `b8d104c`.
+- Added the first Stage B search slice: PostgreSQL full-text indexing of exact chunks and an internal retrieval path with tenant, role, valid-time, recorded-time, supersession, revocation, and source-scope filters. The existing deterministic answer path remains the demo baseline.
+- See `docs/release/v07-outbox-stability.md` and `docs/release/v08-full-text-foundation.md`. Manual UI review, a local clean stack run, backup/restore and the rest of Stage B remain open.
 
 ## 2026-10-25 v0.6 change-watch and revocation preview
 

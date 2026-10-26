@@ -21,6 +21,7 @@ COPY tools/eval_v06_watches.py /workspace/tools/eval_v06_watches.py
 COPY tools/replay_outbox.py /workspace/tools/replay_outbox.py
 COPY tools/eval_v07_outbox.py /workspace/tools/eval_v07_outbox.py
 COPY tools/eval_v07_concurrency.py /workspace/tools/eval_v07_concurrency.py
+COPY tools/eval_v08_search.py /workspace/tools/eval_v08_search.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
