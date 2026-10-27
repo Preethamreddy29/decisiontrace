@@ -26,6 +26,7 @@ def main() -> None:
         "tools.eval_v07_concurrency", "tools.eval_v08_search",
     ):
         run(*COMPOSE, "exec", "-T", "api", "python", "-m", module)
+    run(sys.executable, "tools/verify_backup_restore.py")
     print("Demo preflight passed. Open http://127.0.0.1:5174/ and follow docs/release/demo-test-guide.md.")
 
 
