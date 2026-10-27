@@ -19,21 +19,28 @@ def db_command(script: str, database_name: str, stdin=None, stdout=None) -> None
     run("exec", "-T", "db", "sh", "-c", script, "_", database_name, stdin=stdin, stdout=stdout)
 
 
-def api_command(module: str, database_name: str) -> None:
-    command = f'DATABASE_URL="${{DATABASE_URL%/*}}/{database_name}" python -m {module}'
+def api_primary(action: str, token: str) -> None:
+    run("exec", "-T", "api", "env", f"RESTORE_EVAL_ID={token}", "python", "-m",
+        "tools.restore_fixture", action)
+
+
+def api_restored(module: str, database_name: str, token: str) -> None:
+    command = f'RESTORE_EVAL_ID={token} DATABASE_URL="${{DATABASE_URL%/*}}/{database_name}" python -m {module}'
     run("exec", "-T", "api", "sh", "-c", command)
 
 
 def main() -> None:
-    database_name = "dt_restore_" + secrets.token_hex(6)
+    token = secrets.token_hex(6)
+    database_name = "dt_restore_" + token
     created = False
-    with tempfile.TemporaryFile() as snapshot:
-        db_command(
-            'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc',
-            database_name, stdout=snapshot,
-        )
-        snapshot.seek(0)
-        try:
+    try:
+        api_primary("create", token)
+        with tempfile.TemporaryFile() as snapshot:
+            db_command(
+                'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc',
+                database_name, stdout=snapshot,
+            )
+            snapshot.seek(0)
             db_command(
                 'PGPASSWORD="$POSTGRES_PASSWORD" createdb -U "$POSTGRES_USER" "$1"',
                 database_name,
@@ -44,14 +51,17 @@ def main() -> None:
                 '-U "$POSTGRES_USER" -d "$1"',
                 database_name, stdin=snapshot,
             )
-            api_command("api.app.migrate", database_name)
-            api_command("tools.eval_restore_snapshot", database_name)
-        finally:
+            api_restored("api.app.migrate", database_name, token)
+            api_restored("tools.eval_restore_snapshot", database_name, token)
+    finally:
+        try:
             if created:
                 db_command(
                     'PGPASSWORD="$POSTGRES_PASSWORD" dropdb --if-exists -U "$POSTGRES_USER" "$1"',
                     database_name,
                 )
+        finally:
+            api_primary("cleanup", token)
 
 
 if __name__ == "__main__":
