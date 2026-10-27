@@ -3,6 +3,11 @@
 **As of:** 2026-10-27
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
 
+## 2026-10-27 Stage B index rebuild
+
+- Added a dry-run-first exact chunk-index maintenance command. Explicit apply repairs missing or mismatched chunks, removes stale revoked chunks, verifies source checksums, and holds tenant evidence locks. Seed loading now uses the same locks.
+- The live drill and all prior checks passed in [CI](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40436054619) at `24ca3b0`. See `docs/release/v10-index-rebuild.md`. Vector indexing, pinned model profiles, hybrid retrieval and the remaining Stage B foundation remain.
+
 ## 2026-10-27 same-server restore smoke
 
 - A disposable API-created source was revoked, backed up, and restored into a separate database. After checked migration replay, live evidence still opened, while seeded and API-revoked evidence stayed unavailable through exact-source and full-text paths. The restored audit and local outbox records remained paired.
@@ -12,7 +17,7 @@
 
 - The outbox registry, event-version migration, worker validation, safe replay tool, and live event checks passed CI at commit `55df80e`. The concurrent evidence-read/revocation ordering fix passed CI at commit `b8d104c`.
 - Added the first Stage B search slice: PostgreSQL full-text indexing of exact chunks and an internal retrieval path with tenant, role, valid-time, recorded-time, supersession, revocation, and source-scope filters. The existing deterministic answer path remains the demo baseline. The fresh-stack CI run at `d752ac7` passed all live checks, including full-text retrieval and zero stored chunks for the revoked seed source.
-- See `docs/release/v07-outbox-stability.md` and `docs/release/v08-full-text-foundation.md`. Manual UI review, a local clean stack run, backup/restore and the rest of Stage B remain open.
+- See `docs/release/v07-outbox-stability.md` and `docs/release/v08-full-text-foundation.md`. Manual UI review and a local clean stack run remain in Stage A; later release recovery and the rest of Stage B remain open.
 
 ## 2026-10-25 v0.6 change-watch and revocation preview
 

@@ -17,4 +17,4 @@ The static suite passed locally. The fresh-stack [CI run](https://github.com/Pre
 
 ## Still open in Stage B
 
-pgvector and pinned embedding/reranking profiles, hybrid fusion, artifact storage abstraction, model/config registry, stage telemetry, resumable ingestion, and a full index rebuild procedure remain. Search hits are candidate evidence only; approval and claim verification are separate work in Stage C. No public search endpoint or new answer behavior is claimed here.
+pgvector and pinned embedding/reranking profiles, hybrid fusion, artifact storage abstraction, model/config registry, stage telemetry, and resumable ingestion remain. A full-text chunk-index rebuild procedure now exists; see `v10-index-rebuild.md`. Search hits are candidate evidence only; approval and claim verification are separate work in Stage C. No public search endpoint or new answer behavior is claimed here.
