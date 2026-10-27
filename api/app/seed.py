@@ -8,6 +8,8 @@ from uuid import NAMESPACE_URL, uuid5
 from .config import load_settings
 from .db import connect
 from .indexing import index_source
+from .auth import Actor
+from .locks import evidence_lock_key
 
 
 CORPUS_PATH = Path(__file__).resolve().parents[2] / "corpus" / "sources.json"
@@ -23,10 +25,16 @@ def seed() -> None:
         raise RuntimeError("seed loader accepts only the fictional corpus")
     settings = load_settings()
     with connect(settings.database_url) as connection:
-        for name in sorted({item["tenant"] for item in document["sources"]}):
+        tenant_names = sorted({item["tenant"] for item in document["sources"]})
+        for name in tenant_names:
             connection.execute(
                 "INSERT INTO tenants (id, name) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING",
                 (stable_id(f"tenant/{name}"), name),
+            )
+        for name in tenant_names:
+            connection.execute(
+                "SELECT pg_advisory_xact_lock(%s)",
+                (evidence_lock_key(Actor("seed", name, "owner")),),
             )
         for item in document["sources"]:
             digest = hashlib.sha256(item["text"].encode("utf-8")).hexdigest()
