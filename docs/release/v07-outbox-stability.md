@@ -34,4 +34,4 @@ The worker will acknowledge requeued events. Unknown or malformed records remain
 
 ## Remaining Stage A work
 
-Exercise the current UI manually, test revocation after backup/restore, and record a clean local live stack run. Stage B then adds the planned search/model/storage/telemetry foundation. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/decisiontrace-status/docs/05_DECISIONTRACE_COMPLETION_PLAN.md).
+Exercise the current UI manually and record a clean local live stack run. A same-server backup/restore check now covers API-created revocation and preserved audit/outbox lineage; see `v09-restore-smoke.md`. A clean-host recovery drill remains a release gate. Stage B adds the planned search/model/storage/telemetry foundation. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/decisiontrace-status/docs/05_DECISIONTRACE_COMPLETION_PLAN.md).

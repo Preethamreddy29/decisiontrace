@@ -3,6 +3,11 @@
 **As of:** 2026-10-27
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
 
+## 2026-10-27 same-server restore smoke
+
+- A disposable API-created source was revoked, backed up, and restored into a separate database. After checked migration replay, live evidence still opened, while seeded and API-revoked evidence stayed unavailable through exact-source and full-text paths. The restored audit and local outbox records remained paired.
+- The [CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40434501630) passed at `b50a540`. See `docs/release/v09-restore-smoke.md`. Manual UI review, a clean local stack run, and a later clean-host recovery drill remain.
+
 ## 2026-10-27 Stage A verification and Stage B full-text slice
 
 - The outbox registry, event-version migration, worker validation, safe replay tool, and live event checks passed CI at commit `55df80e`. The concurrent evidence-read/revocation ordering fix passed CI at commit `b8d104c`.
