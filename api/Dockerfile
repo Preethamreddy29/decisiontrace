@@ -24,6 +24,8 @@ COPY tools/eval_v07_concurrency.py /workspace/tools/eval_v07_concurrency.py
 COPY tools/eval_v08_search.py /workspace/tools/eval_v08_search.py
 COPY tools/eval_restore_snapshot.py /workspace/tools/eval_restore_snapshot.py
 COPY tools/restore_fixture.py /workspace/tools/restore_fixture.py
+COPY tools/rebuild_index.py /workspace/tools/rebuild_index.py
+COPY tools/eval_v10_rebuild.py /workspace/tools/eval_v10_rebuild.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

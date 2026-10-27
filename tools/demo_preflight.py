@@ -24,6 +24,7 @@ def main() -> None:
         "tools.eval_holdout_v05", "tools.eval_demo_readiness", "tools.eval_oidc_route",
         "tools.eval_v06_revocation", "tools.eval_v06_watches", "tools.eval_v07_outbox",
         "tools.eval_v07_concurrency", "tools.eval_v08_search",
+        "tools.eval_v10_rebuild",
     ):
         run(*COMPOSE, "exec", "-T", "api", "python", "-m", module)
     run(sys.executable, "tools/verify_backup_restore.py")
