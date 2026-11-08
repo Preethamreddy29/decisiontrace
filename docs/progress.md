@@ -1,7 +1,12 @@
 # Progress
 
-**As of:** 2026-10-27
+**As of:** 2026-11-08
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-11-08 repository documentation audit
+
+- Rewrote the root README around the bounded v0.6 demo, its current Stage A/B evidence, one-command preflight, and the open v1 gates. Updated the implementation plan and requirements traceability to distinguish partial runtime proof from completion.
+- Added a concise GitHub About description. Historical release records remain dated snapshots. Static repository checks and local documentation links pass; the last verified full live CI run remains [40436054619](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40436054619).
 
 ## 2026-10-27 Stage B index rebuild
 
@@ -78,7 +83,7 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, a stored chunk index, author revocation, and reviewed downstream change watches are implemented for the bounded synthetic demo. General chunk retrieval, external pull connectors, physical deletion, automatic semantic drift, broader evaluation operations, and other planned API operations remain open.
+- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, a stored chunk index, author revocation, and reviewed downstream change watches are implemented for the bounded synthetic demo. Authorized full-text chunk search and index repair are implemented, but query answers still use the bounded full-source resolver. Vector/hybrid retrieval, external pull connectors, physical deletion, automatic semantic drift, broader evaluation operations, and other planned API operations remain open.
 - An external-token verifier exists but has not been integrated with a real issuer or complete browser sign-in flow. No model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
 - The remaining Phase 3 product work is independent review of answer labels and a real identity-provider integration test. Broader product behavior and security depth continue in later phases.
 

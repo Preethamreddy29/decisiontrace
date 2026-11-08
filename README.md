@@ -1,30 +1,41 @@
 # DecisionTrace
 
-DecisionTrace is a local-first product for reconstructing *why* a product decision was made, what applied at a particular time, and which versioned evidence supports the answer. All initial scenarios and data are fictional.
+DecisionTrace is a local demo for reconstructing why a product decision was made, what applied on a chosen date, and which exact versioned evidence supports the answer. The supplied scenarios and data are fictional.
 
 ## Current status
 
-Phase 0's synthetic corpus gate, the Phase 1 design gate, and the Phase 2 local foundation gate are complete. The interactive v0.6 synthetic demo includes governed file/connector intake, optional external OIDC token verification, reviewed downstream change watches, and source revocation. The full Phase 3 product gate remains open until the new answer labels receive independent human review and an actual identity provider is exercised. The full Phase 4 gate, general question answering, and RuleTwin integration remain open. The separate RuleTwin project is being developed in parallel.
+The interactive v0.6 demo supports source intake, corrections, independent decision approval, historical questions with exact citations, downstream change review, and source revocation. Its answer resolver is deliberately bounded to the fictional manual-override and invoice-hold scenarios. It is not a general question-answering or production release.
 
-The demo uses a deterministic, bounded resolver over the frozen fictional corpus and locally authored demo evidence. An approved decision binds exact source-version IDs; a later correction makes stale evidence unavailable to current answers while preserving historical answers unless the source is revoked. It distinguishes correction from supersession, flags draft/test conflicts, and abstains outside supported manual-override and invoice-hold questions. Markdown headings, transcript turns, and JSON paths receive deterministic section IDs; answer citations resolve to exact authorized sections. A downstream source-version change enters an independent review queue; reviewers decide whether it is drift. Persisted bounded chunks support later retrieval work; the current resolver still reads authorized full source text. The original 25 seed prompts, 14 v0.2 paraphrases, v0.3–v0.6 workflow checks, and agent-authored 20-case draft are reproducibility checks, not an independent human-reviewed accuracy claim. RuleTwin integration follows a stable, versioned evidence contract and a consumer test.
+The local foundation also has a validated outbox, concurrent read/revocation ordering, authorized PostgreSQL full-text chunk search, a dry-run-first chunk-index rebuild, and a same-server backup/restore smoke. These are [Stage A and B increments](docs/progress.md); the demo answer path still reads authorized source versions directly. The [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md) tracks the full v1 gates.
 
-Start with the [charter](docs/product/charter.md), [corpus plan](docs/product/synthetic-corpus.md), [temporal model](docs/architecture/temporal-model.md), [implementation plan](docs/implementation-plan.md), and [progress log](docs/progress.md).
+Open work includes vector and model retrieval, hybrid answers with a claim verifier, broader ingestion and extraction review, semantic drift, a reviewed 100+ question evaluation, complete security and release drills, and RuleTwin integration. The 20 draft answer labels need independent human review. The optional OIDC token verifier has only synthetic issuer checks; a real provider and browser sign-in flow remain untested.
 
-Run `python tools/validate_corpus.py` to verify the 14 synthetic source versions, 25 labeled seed cases, 14 v0.2 paraphrases, and manifest. The corpus and project are MIT licensed; see [LICENSE](LICENSE).
+## Run the fictional demo
 
-## Local foundation
+Install Python, Node/npm, and Docker Compose, then run this from the repository root:
 
-From this repository, run `docker compose --env-file .env.example up --build -d`. Load the fictional corpus with `docker compose --env-file .env.example exec -T api python -m api.app.seed`, then open `http://127.0.0.1:5174`. Sign in as **Cedar author / auditor** with passphrase `local-demo-only`. Under **Take new evidence through review**, choose **Use invoice-hold example**, add the fictional source, and create a decision draft. Switch to **Cedar independent reviewer** with the same local passphrase and approve it. The page sets the question and dates for the approved answer; open the exact cited section. The earlier historical examples remain available. The API readiness endpoint is `http://127.0.0.1:8001/health/ready`. Run `python tools/check_all.py` and the API-container commands `python -m api.app.smoke`, `python -m tools.eval_demo`, `python -m tools.eval_v02`, `python -m tools.eval_v03`, and `python -m tools.eval_v04` for local checks. Stop the stack with `docker compose --env-file .env.example down`; omit `-v` to retain local data. These commands are for a loopback-only synthetic demo environment.
+```powershell
+python tools/demo_preflight.py
+```
 
-Run `python tools/check_all.py` for corpus, contract, credential-pattern, web-build, and Compose-configuration checks. The [v0.6 release record](docs/release/v06-change-watch-revocation.md) lists the current proof and limits, and the [review packet](docs/release/v05-review-packet.md) explains the independent label gate. Earlier [v0.5](docs/release/v05-identity-intake-evaluation.md), [v0.4](docs/release/v04-structured-evidence.md), [v0.3](docs/release/v03-governed-workflow.md), [v0.2](docs/release/v02-interactive-demo.md), [foundation](docs/release/phase2-foundation-gate.md), and [curated preview](docs/release/phase3-demo-preview.md) records remain available.
+The preflight builds the web app and local containers, seeds the fictional corpus, runs static and live checks, exercises a same-server restore, and leaves the demo running. Open [http://127.0.0.1:5174/](http://127.0.0.1:5174/). Sign in as **Cedar author / auditor** with the local passphrase `local-demo-only`. Follow the [demo test guide](docs/release/demo-test-guide.md) to compare historical answers, upload the [fictional invoice-hold file](corpus/demo-invoice-holds.md), obtain independent approval, inspect an exact citation, review a downstream change, and revoke its source.
 
-For a complete build and local readiness check before manual testing, run `python tools/demo_preflight.py` and follow the [demo test guide](docs/release/demo-test-guide.md). Upload the [fictional sample file](corpus/demo-invoice-holds.md), independently approve its decision, link a downstream test source, correct that test, review the change, and revoke the test source. Markdown, transcript text, and JSON files are accepted up to 32 KiB and 10,000 characters. The preflight includes the 20-case draft diagnostic and v0.6 checks. Set `CONNECTOR_IDS=fictional-push` for the authenticated snapshot endpoint. See the v0.5 release record for external OIDC configuration and limits.
+The API readiness endpoint is [http://127.0.0.1:8001/health/ready](http://127.0.0.1:8001/health/ready). To stop the stack while keeping local data, run `docker compose --env-file .env.example down`. The demo binds services to loopback and uses published fictional credentials; do not load real customer or confidential data.
 
-## Boundaries
+For static checks alone, run `python tools/check_all.py`. The [latest verified code CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/40436054619) covers the full live suite, index rebuild, and restore smoke. CI evidence is for the synthetic local stack; it does not close the v1 release gates.
 
-- No real customer, employer, or confidential product data.
-- No answer is authoritative until source permission, temporal scope, and citation support are checked.
-- Extracted decisions require human review before becoming approved decision contracts.
-- DecisionTrace owns its own data. Future RuleTwin integration uses a versioned interface, never direct database access.
-- The initial target is a local demo. Production or evaluation claims require reproducible evidence.
-- The shared demo passphrase and server-issued bearer tokens are for fictional loopback use only. Tokens expire after eight hours and become invalid when the API restarts. `AUTH_MODE=oidc` is a separate strict API verification mode; deployment still needs a trusted issuer, HTTPS, token acquisition, and lifecycle operations.
+## What is implemented
+
+- Versioned, checksum-checked fictional sources with tenant, role, valid-time, and recorded-time controls; Markdown, transcript, and JSON sections have stable IDs and exact offsets.
+- Governed source and decision workflows: text/file intake, allowlisted push snapshots, correction history, independent approval, idempotent protected mutations, audit/outbox records, and author-controlled source revocation.
+- Bounded structured answers with exact authorized citations, conflict and abstention states, and a source drill-down. A later correction changes current evidence while earlier recorded-time queries can inspect the historical version unless it was revoked.
+- Reviewed downstream watches for `tests`, `implements`, and `measures` relations. Reviewers classify a source-version change as drift or alignment; automatic semantic drift detection remains open.
+- Internal full-text search over authorized temporal chunks, a safe index repair command, and local outbox/recovery checks. Search candidates are not yet used to generate demo answers.
+
+## Project records
+
+- [Progress and open work](docs/progress.md) · [Implementation plan](docs/implementation-plan.md) · [Requirements traceability](docs/requirements-traceability.md)
+- [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md)
+- [v0.6 demo workflow](docs/release/v06-change-watch-revocation.md) · [Independent label review packet](docs/release/v05-review-packet.md) · [Design decisions](docs/decisions/ADR-001-postgresql-full-text-and-pgvector.md)
+
+The project is [MIT licensed](LICENSE). DecisionTrace owns its database. Future RuleTwin integration will use a versioned contract and consumer tests.
