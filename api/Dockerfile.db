@@ -1,0 +1,10 @@
+FROM postgres:16-alpine
+
+# Keep the existing PostgreSQL 16 Alpine data-volume format while adding
+# the versioned extension required by migration 009.
+RUN apk add --no-cache --virtual .pgvector-build build-base git \
+    && git clone --depth 1 --branch v0.8.7 https://github.com/pgvector/pgvector.git /tmp/pgvector \
+    && make -C /tmp/pgvector OPTFLAGS="" \
+    && make -C /tmp/pgvector OPTFLAGS="" install \
+    && rm -rf /tmp/pgvector \
+    && apk del .pgvector-build

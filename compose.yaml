@@ -2,7 +2,9 @@ name: decisiontrace
 
 services:
   db:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: api/Dockerfile.db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}

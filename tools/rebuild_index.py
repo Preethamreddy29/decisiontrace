@@ -8,8 +8,9 @@ from api.app.auth import Actor
 from api.app.config import load_settings
 from api.app.db import connect
 from api.app.indexing import CHUNKER_VERSION, chunk_source, index_source
+from api.app.embedding import PROFILE, vector_checksum, vector_literal
 from api.app.locks import evidence_lock_key
-from api.app.retrieval import SEARCH_VERSION
+from api.app.retrieval import SEARCH_VERSION, VECTOR_SEARCH_VERSION
 
 
 def rebuild_index(database_url: str, *, tenant: str | None = None, apply: bool = False) -> dict:
@@ -27,6 +28,8 @@ def rebuild_index(database_url: str, *, tenant: str | None = None, apply: bool =
         "mode": "apply" if apply else "dry_run",
         "chunker_version": CHUNKER_VERSION,
         "search_version": SEARCH_VERSION,
+        "vector_search_version": VECTOR_SEARCH_VERSION,
+        "embedding_profile": PROFILE,
         "tenants": len(tenants),
         "checked_versions": 0,
         "repaired_versions": 0,
@@ -44,10 +47,12 @@ def rebuild_index(database_url: str, *, tenant: str | None = None, apply: bool =
             for version_id, kind, content, source_sha, revoked_at in versions:
                 result["checked_versions"] += 1
                 actual = [
-                    (row[0], row[1], row[2], row[3], row[4].strip(), row[5], row[6])
+                    (row[0], row[1], row[2], row[3], row[4].strip(), row[5], row[6],
+                     row[7], row[8], row[9].strip() if row[9] else None)
                     for row in connection.execute(
                         "SELECT chunk_id, section_id, start_char, end_char, content_sha256, "
-                        "chunker_version, content_text FROM source_chunks "
+                        "chunker_version, content_text, embedding::text, embedding_profile, "
+                        "embedding_sha256 FROM source_chunks "
                         "WHERE tenant_id = %s AND source_version_id = %s ORDER BY chunk_id",
                         (tenant_id, version_id),
                     ).fetchall()
@@ -64,7 +69,10 @@ def rebuild_index(database_url: str, *, tenant: str | None = None, apply: bool =
                     raise RuntimeError(f"source version {version_id} failed its checksum")
                 expected = sorted(
                     (chunk.chunk_id, chunk.section_id, chunk.start_char, chunk.end_char,
-                     chunk.sha256, CHUNKER_VERSION, chunk.content_text)
+                     chunk.sha256, CHUNKER_VERSION, chunk.content_text,
+                     vector_literal(chunk.content_text), PROFILE,
+                     vector_checksum(vector_literal(chunk.content_text))
+                     if vector_literal(chunk.content_text) else None)
                     for chunk in chunk_source(kind, content)
                 )
                 if actual != expected:

@@ -6,9 +6,9 @@ DecisionTrace is a local demo for reconstructing why a product decision was made
 
 The interactive v0.6 demo supports source intake, corrections, independent decision approval, historical questions with exact citations, downstream change review, and source revocation. Its answer resolver is deliberately bounded to the fictional manual-override and invoice-hold scenarios. It is not a general question-answering or production release.
 
-The local foundation also has a validated outbox, concurrent read/revocation ordering, authorized PostgreSQL full-text chunk search, a dry-run-first chunk-index rebuild, and a same-server backup/restore smoke. These are [Stage A and B increments](docs/progress.md); the demo answer path still reads authorized source versions directly. The [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md) tracks the full v1 gates.
+The local foundation also has a validated outbox, concurrent read/revocation ordering, authorized PostgreSQL full-text and experimental vector chunk search, a dry-run-first chunk-index rebuild, and a same-server backup/restore smoke. These are [Stage A and B increments](docs/progress.md); the demo answer path still reads authorized source versions directly. The [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md) tracks the full v1 gates.
 
-Open work includes vector and model retrieval, hybrid answers with a claim verifier, broader ingestion and extraction review, semantic drift, a reviewed 100+ question evaluation, complete security and release drills, and RuleTwin integration. The 20 draft answer labels need independent human review. The optional OIDC token verifier has only synthetic issuer checks; a real provider and browser sign-in flow remain untested.
+Open work includes a semantic model profile, hybrid answers with a claim verifier, broader ingestion and extraction review, semantic drift, a reviewed 100+ question evaluation, complete security and release drills, and RuleTwin integration. The 20 draft answer labels need independent human review. The optional OIDC token verifier has only synthetic issuer checks; a real provider and browser sign-in flow remain untested.
 
 ## Run the fictional demo
 
@@ -30,12 +30,12 @@ For static checks alone, run `python tools/check_all.py`. The [latest verified c
 - Governed source and decision workflows: text/file intake, allowlisted push snapshots, correction history, independent approval, idempotent protected mutations, audit/outbox records, and author-controlled source revocation.
 - Bounded structured answers with exact authorized citations, conflict and abstention states, and a source drill-down. A later correction changes current evidence while earlier recorded-time queries can inspect the historical version unless it was revoked.
 - Reviewed downstream watches for `tests`, `implements`, and `measures` relations. Reviewers classify a source-version change as drift or alignment; automatic semantic drift detection remains open.
-- Internal full-text search over authorized temporal chunks, a safe index repair command, and local outbox/recovery checks. Search candidates are not yet used to generate demo answers.
+- Internal full-text and pinned token-set vector candidate search over authorized temporal chunks, a safe index repair command, and local outbox/recovery checks. The vector profile is a deterministic baseline, not a semantic model. Search candidates are not yet used to generate demo answers.
 
 ## Project records
 
 - [Progress and open work](docs/progress.md) · [Implementation plan](docs/implementation-plan.md) · [Requirements traceability](docs/requirements-traceability.md)
-- [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md)
+- [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md) · [Vector foundation](docs/release/v11-vector-foundation.md)
 - [v0.6 demo workflow](docs/release/v06-change-watch-revocation.md) · [Independent label review packet](docs/release/v05-review-packet.md) · [Design decisions](docs/decisions/ADR-001-postgresql-full-text-and-pgvector.md)
 
 The project is [MIT licensed](LICENSE). DecisionTrace owns its database. Future RuleTwin integration will use a versioned contract and consumer tests.

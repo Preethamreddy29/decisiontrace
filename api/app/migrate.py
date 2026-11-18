@@ -6,6 +6,7 @@ from pathlib import Path
 from .config import load_settings
 from .db import connect
 from .indexing import index_source
+from .embedding import PROFILE
 
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "migrations"
@@ -53,6 +54,18 @@ def migrate() -> None:
                 "SELECT s.tenant_id, s.id, s.kind, s.content FROM source_versions s "
                 "WHERE s.revoked_at IS NULL AND NOT EXISTS (SELECT 1 FROM source_chunks c WHERE c.tenant_id = s.tenant_id "
                 "AND c.source_version_id = s.id)"
+            ).fetchall()
+            for tenant_id, version_id, kind, content in rows:
+                index_source(connection, tenant_id, version_id, kind, content)
+            connection.commit()
+        # Existing exact chunks gain vectors after the extension migration.
+        if connection.execute("SELECT to_regclass('source_chunks_vector_scope_idx')").fetchone()[0] is not None:
+            rows = connection.execute(
+                "SELECT DISTINCT s.tenant_id, s.id, s.kind, s.content FROM source_versions s "
+                "JOIN source_chunks c ON c.tenant_id = s.tenant_id AND c.source_version_id = s.id "
+                "WHERE s.revoked_at IS NULL AND (c.embedding_profile IS DISTINCT FROM %s "
+                "OR c.embedding IS NULL AND c.embedding_profile IS NOT NULL)",
+                (PROFILE,),
             ).fetchall()
             for tenant_id, version_id, kind, content in rows:
                 index_source(connection, tenant_id, version_id, kind, content)

@@ -4,6 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from uuid import UUID
 
+from .embedding import PROFILE, vector_checksum, vector_literal
 from .sections import parse_sections
 
 
@@ -54,11 +55,15 @@ def index_source(connection, tenant_id: UUID, version_id: UUID, kind: str, conte
     connection.execute("DELETE FROM source_chunks WHERE tenant_id = %s AND source_version_id = %s", (tenant_id, version_id))
     chunks = chunk_source(kind, content)
     for item in chunks:
+        embedding = vector_literal(item.content_text)
         connection.execute(
             "INSERT INTO source_chunks (tenant_id, source_version_id, chunk_id, section_id, "
-            "start_char, end_char, content_sha256, chunker_version, content_text) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "start_char, end_char, content_sha256, chunker_version, content_text, "
+            "embedding, embedding_profile, embedding_sha256) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::vector, %s, %s)",
             (tenant_id, version_id, item.chunk_id, item.section_id,
-             item.start_char, item.end_char, item.sha256, CHUNKER_VERSION, item.content_text),
+             item.start_char, item.end_char, item.sha256, CHUNKER_VERSION, item.content_text,
+             embedding, PROFILE,
+             vector_checksum(embedding) if embedding else None),
         )
     return len(chunks)
