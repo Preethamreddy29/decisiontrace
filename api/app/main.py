@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="DecisionTrace", version="0.5.0-preview", lifespan=lifespan)
+app = FastAPI(title="DecisionTrace", version="0.6.0-preview", lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -100,7 +100,7 @@ def ready(request: Request):
 
 @app.get("/version")
 def version():
-    return {"service": "decisiontrace", "version": "0.5.0-preview", "product_ready": False,
+    return {"service": "decisiontrace", "version": "0.6.0-preview", "product_ready": False,
             "auth_mode": os.environ.get("AUTH_MODE", "demo").strip().lower()}
 
 

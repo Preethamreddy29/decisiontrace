@@ -1,7 +1,13 @@
 # Progress
 
-**As of:** 2026-11-08
+**As of:** 2026-11-18
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-11-18 Stage B vector and Stage C candidate baseline
+
+- Added pgvector v0.8.7 to the existing PostgreSQL 16 Alpine image family. Migration 009 stores a pinned 64-dimensional token-set baseline beside exact chunks and backfills existing live chunks. Vector retrieval enforces temporal, tenant, role, revocation, and source-scope predicates and verifies exact text/vector checksums. The dry-run-first rebuild now detects and repairs vector drift. The [vector CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44350601511) passed with the existing demo and restore suite.
+- Added a single-snapshot, exact keyword/vector rank-fusion candidate path with the same authorization checks. The [hybrid CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44351410245) passed. These paths return candidates only; the v0.6 demo answer resolver has not been replaced. The vector profile is a deterministic lexical baseline, not a semantic model. See [vector](release/v11-vector-foundation.md) and [hybrid](release/v12-hybrid-candidates.md) records.
+- Local Docker engine was unavailable, so the manual UI walkthrough and persistent-volume upgrade rehearsal remain open. The 20 draft answer labels still need independent review.
 
 ## 2026-11-08 repository documentation audit
 
@@ -83,13 +89,13 @@
 ## Current open work
 
 - Phase 2's foundation gate is closed. The local secret-pattern scanner is a narrow tripwire, not a complete supply-chain audit.
-- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, a stored chunk index, author revocation, and reviewed downstream change watches are implemented for the bounded synthetic demo. Authorized full-text chunk search and index repair are implemented, but query answers still use the bounded full-source resolver. Vector/hybrid retrieval, external pull connectors, physical deletion, automatic semantic drift, broader evaluation operations, and other planned API operations remain open.
+- `/v1/query`, governed text/file/connector-push source versions, decision review/history, exact source GET, a stored chunk index, author revocation, and reviewed downstream change watches are implemented for the bounded synthetic demo. Authorized full-text, experimental vector, and hybrid candidate search plus index repair are implemented, but query answers still use the bounded full-source resolver. A semantic model, scalable retrieval, external pull connectors, physical deletion, automatic semantic drift, broader evaluation operations, and other planned API operations remain open.
 - An external-token verifier exists but has not been integrated with a real issuer or complete browser sign-in flow. No model, independent human-reviewed holdout, 100-question set, full security/failure suite, or RuleTwin connector exists. The local demo credentials are deliberately shared and unsuitable for deployment.
 - The remaining Phase 3 product work is independent review of answer labels and a real identity-provider integration test. Broader product behavior and security depth continue in later phases.
 
 ## Next checkpoint
 
-Complete the independent label review, exercise the external identity configuration with a real issuer, and then decide whether the Phase 3 product gate is met. Integration with RuleTwin remains gated on its stable evidence contract and consumer tests.
+Run the manual v0.6 UI walkthrough and persistent-volume upgrade rehearsal when local Docker is available. Complete the independently reviewed labels and a real identity-provider test, then build a pinned semantic model, measured retrieval-backed answer path, and deterministic claim verifier. RuleTwin integration remains gated on its stable evidence contract and consumer tests.
 
 ## Original 2026-10-23 setup record
 

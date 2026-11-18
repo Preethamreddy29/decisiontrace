@@ -1,6 +1,6 @@
 # DecisionTrace Requirements Traceability
 
-**As of 2026-11-08:** Phase 1 design, the Phase 2 local core, and the bounded v0.6 fictional workflow have evidence. Stage A outbox, revocation-ordering, and same-server restore checks plus Stage B full-text search/index repair pass in CI. The full product and release proofs below remain open.
+**As of 2026-11-18:** Phase 1 design, the Phase 2 local core, and the bounded v0.6 fictional workflow have evidence. Stage A outbox, revocation-ordering, and same-server restore checks plus Stage B full-text/vector candidate search, exact rank fusion, and index repair pass in CI. The full product and release proofs below remain open.
 
 | ID | Requirement | Design location | Required implementation proof |
 |---|---|---|---|
@@ -17,4 +17,4 @@
 | DT-11 | Multi-tenant permission isolation | ADR-010; `threat-to-test.md`; Q10/Q11/Q23 | Full source, query, citation, cache, export, trace matrix passes. |
 | DT-12 | Reproducible local demo and evaluation | `implementation-plan.md`; corpus manifest | Clean setup, 25-case first slice, later 100+ gold and named-hardware report. |
 
-The Phase 1 design gate maps each critical row to a contract and planned proof. The v0.2–v0.6 checks supply bounded runtime proof for ingestion, review, temporal answers, exact sections, tenant isolation, and protected mutations (DT-01–04, DT-06, DT-10–12). Stage A adds local outbox validation/replay, concurrent revocation ordering, and a same-server restore; Stage B adds authorized full-text candidates and a rebuild drill, giving **partial** proof for DT-05 and DT-08. See [progress](progress.md) and the [current plan](implementation-plan.md) for exact runs. Vector retrieval, model/version controls, general claim verification, physical deletion/retention, independent answer evaluation, full security slices, and release proof remain open.
+The Phase 1 design gate maps each critical row to a contract and planned proof. The v0.2–v0.6 checks supply bounded runtime proof for ingestion, review, temporal answers, exact sections, tenant isolation, and protected mutations (DT-01–04, DT-06, DT-10–12). Stage A adds local outbox validation/replay, concurrent revocation ordering, and a same-server restore; Stage B adds authorized full-text/vector candidates, exact rank fusion, and a rebuild drill, giving **partial** proof for DT-05 and DT-08. See [progress](progress.md) and the [current plan](implementation-plan.md) for exact runs. Semantic vector retrieval, model/version controls, general claim verification, physical deletion/retention, independent answer evaluation, full security slices, and release proof remain open.
