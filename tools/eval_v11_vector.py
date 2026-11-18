@@ -22,6 +22,7 @@ def main() -> None:
     viewer = ACCOUNTS["cedar_viewer"]
     meeting = stable_id("source/SRC-MEETING-001")
     revoked = stable_id("source/SRC-REVOKED-001")
+    lumen_source = stable_id("source/SRC-ADR-002")
 
     vector = vector_literal("Two independent reviewers")
     assert vector and len(vector.split(",")) == DIMENSIONS
@@ -51,9 +52,10 @@ def main() -> None:
     assert vector_chunks(database_url, viewer, "manual overrides", date(2026, 5, 15),
                          at("2026-05-16T00:00:00Z")) == []
     assert vector_chunks(database_url, cedar, "Lumen manual overrides", date(2026, 5, 15),
-                         at("2026-05-16T00:00:00Z")) == []
-    assert vector_chunks(database_url, lumen, "Lumen manual overrides", date(2026, 5, 15),
-                         at("2026-05-16T00:00:00Z"))
+                         at("2026-05-16T00:00:00Z"), source_ids=[lumen_source]) == []
+    lumen_hits = vector_chunks(database_url, lumen, "Lumen manual overrides", date(2026, 5, 15),
+                               at("2026-05-16T00:00:00Z"), source_ids=[lumen_source])
+    assert lumen_hits and all(hit.source_id == str(lumen_source) for hit in lumen_hits)
     assert vector_chunks(database_url, cedar, "reviewer", date(2026, 5, 15),
                          at("2026-05-15T00:00:00Z"), source_ids=[]) == []
 
