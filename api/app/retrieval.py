@@ -15,6 +15,7 @@ from .seed import stable_id
 
 SEARCH_VERSION = "postgres-english-fts-v1"
 VECTOR_SEARCH_VERSION = "pgvector-token-set-v1"
+HYBRID_SEARCH_VERSION = "exact-authorized-rrf-v1"
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,99 @@ def vector_chunks(
         values.append(source_ids)
     sql += " ORDER BY c.embedding <=> %s::vector, s.recorded_at DESC, s.version DESC, c.chunk_id LIMIT %s"
     values.extend((query_vector, limit))
+
+    with connect(database_url) as connection:
+        connection.execute("SELECT pg_advisory_xact_lock_shared(%s)", (evidence_lock_key(actor),))
+        rows = connection.execute(sql, values).fetchall()
+        hits = []
+        for row in rows:
+            (source_id, version_id, label, version, kind, status, section_id, chunk_id,
+             start, end, passage, chunk_sha, chunker, source, source_sha,
+             stored_vector, vector_sha, score) = row
+            expected_vector = vector_literal(passage)
+            if chunker != CHUNKER_VERSION or passage != source[start:end]:
+                continue
+            if hashlib.sha256(passage.encode("utf-8")).hexdigest() != chunk_sha.strip():
+                continue
+            if hashlib.sha256(source.encode("utf-8")).hexdigest() != source_sha.strip():
+                continue
+            if expected_vector != stored_vector or vector_checksum(expected_vector) != vector_sha.strip():
+                continue
+            hits.append(SearchHit(
+                str(source_id), str(version_id), label, version, kind, status,
+                section_id, chunk_id, start, end, passage, float(score),
+            ))
+        return hits
+
+
+
+def hybrid_candidate_chunks(
+    database_url: str,
+    actor: Actor,
+    question: str,
+    valid_on: date,
+    recorded_as_of: datetime,
+    source_ids: list[UUID] | None = None,
+    limit: int = 20,
+) -> list[SearchHit]:
+    """Fuse lexical and vector candidate ranks inside one authorized snapshot.
+
+    This is an exact, bounded-baseline candidate path. It does not produce
+    answers, infer approval, or verify claims.
+    """
+    if not 3 <= len(question) <= 2000 or not question.strip():
+        raise ValueError("question must contain 3 to 2000 characters")
+    if recorded_as_of.tzinfo is None or recorded_as_of.utcoffset() is None:
+        raise ValueError("recorded_as_of must include a timezone")
+    if not 1 <= limit <= 50:
+        raise ValueError("limit must be from 1 to 50")
+    if source_ids is not None and not source_ids:
+        return []
+    query_vector = vector_literal(question)
+    if query_vector is None:
+        return []
+
+    sql = (
+        "WITH q AS (SELECT plainto_tsquery('english'::regconfig, %s) AS tsq, %s::vector AS v), "
+        "authorized AS ("
+        "SELECT s.source_id, s.id AS version_id, s.external_label, s.version, s.kind, s.status, "
+        "s.recorded_at, s.content AS source_text, s.content_sha256 AS source_sha, "
+        "c.section_id, c.chunk_id, c.start_char, c.end_char, c.content_text, "
+        "c.content_sha256 AS chunk_sha, c.chunker_version, c.embedding::text AS stored_vector, "
+        "c.embedding_sha256 AS vector_sha, "
+        "ts_rank_cd(c.search_vector, q.tsq) AS lexical_score, "
+        "1 - (c.embedding <=> q.v) AS vector_score "
+        "FROM source_chunks c "
+        "JOIN source_versions s ON s.tenant_id = c.tenant_id AND s.id = c.source_version_id "
+        "CROSS JOIN q "
+        "WHERE c.tenant_id = %s AND s.tenant_id = %s AND %s = ANY(s.roles) "
+        "AND s.recorded_at <= %s AND (s.superseded_at IS NULL OR s.superseded_at > %s) "
+        "AND s.revoked_at IS NULL AND s.external_label IS NOT NULL "
+        "AND s.valid_from <= %s AND (s.valid_to IS NULL OR s.valid_to > %s) "
+        "AND c.embedding_profile = %s AND c.embedding IS NOT NULL"
+    )
+    tenant_id = stable_id(f"tenant/{actor.tenant}")
+    values: list = [
+        question, query_vector, tenant_id, tenant_id, actor.role,
+        recorded_as_of, recorded_as_of, valid_on, valid_on, PROFILE,
+    ]
+    if source_ids is not None:
+        sql += " AND s.source_id = ANY(%s::uuid[])"
+        values.append(source_ids)
+    sql += (
+        "), ranked AS (SELECT *, "
+        "row_number() OVER (ORDER BY lexical_score DESC, recorded_at DESC, version DESC, chunk_id) AS lexical_rank, "
+        "row_number() OVER (ORDER BY vector_score DESC, recorded_at DESC, version DESC, chunk_id) AS vector_rank "
+        "FROM authorized), "
+        "fused AS (SELECT *, "
+        "(CASE WHEN lexical_score > 0 THEN 1.0 / (60 + lexical_rank) ELSE 0 END "
+        "+ 1.0 / (60 + vector_rank)) AS score FROM ranked) "
+        "SELECT source_id, version_id, external_label, version, kind, status, "
+        "section_id, chunk_id, start_char, end_char, content_text, chunk_sha, chunker_version, "
+        "source_text, source_sha, stored_vector, vector_sha, score "
+        "FROM fused ORDER BY score DESC, recorded_at DESC, version DESC, chunk_id LIMIT %s"
+    )
+    values.append(limit)
 
     with connect(database_url) as connection:
         connection.execute("SELECT pg_advisory_xact_lock_shared(%s)", (evidence_lock_key(actor),))
