@@ -4,7 +4,7 @@ FROM postgres:16-alpine
 # the versioned extension required by migration 009.
 RUN apk add --no-cache --virtual .pgvector-build build-base git \
     && git clone --depth 1 --branch v0.8.7 https://github.com/pgvector/pgvector.git /tmp/pgvector \
-    && make -C /tmp/pgvector OPTFLAGS="" \
-    && make -C /tmp/pgvector OPTFLAGS="" install \
+    && make -C /tmp/pgvector OPTFLAGS="" with_llvm=no \
+    && make -C /tmp/pgvector OPTFLAGS="" with_llvm=no install \
     && rm -rf /tmp/pgvector \
     && apk del .pgvector-build
