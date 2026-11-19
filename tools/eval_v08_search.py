@@ -36,15 +36,17 @@ def main() -> None:
                                source_ids=[stable_id("source/SRC-ADR-001")])
     assert expired == [], expired
 
+    lumen_source = stable_id("source/SRC-ADR-002")
     assert full_text_chunks(database_url, cedar, "Lumen manual overrides", date(2026, 5, 15),
-                            at("2026-05-16T00:00:00Z")) == []
+                            at("2026-05-16T00:00:00Z"), source_ids=[lumen_source]) == []
     assert "SRC-ADR-002-v1" in labels(full_text_chunks(database_url, lumen, "Lumen manual overrides",
                                                          date(2026, 5, 15), at("2026-05-16T00:00:00Z")))
     assert full_text_chunks(database_url, viewer, "manual overrides", date(2026, 5, 15),
                             at("2026-05-16T00:00:00Z")) == []
 
     assert full_text_chunks(database_url, cedar, "Withdrawn fictional working note", date(2026, 6, 1),
-                            at("2026-06-30T00:00:00Z")) == []
+                            at("2026-06-30T00:00:00Z"),
+                            source_ids=[stable_id("source/SRC-REVOKED-001")]) == []
     assert full_text_chunks(database_url, cedar, "reviewer", date(2026, 5, 15),
                             at("2026-05-15T00:00:00Z"), source_ids=[]) == []
 

@@ -1,7 +1,12 @@
 # Progress
 
-**As of:** 2026-11-18
+**As of:** 2026-11-19
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-11-19 local upgrade and candidate timing checkpoint
+
+- Backed up the existing persistent fictional demo database before migration 009, then ran the full local demo preflight on the upgraded PostgreSQL 16 Alpine/pgvector stack. Seed, workflow, isolation, revocation, vector, hybrid, and same-server restore checks passed; the demo was left running. The backup remains local and excluded from Git.
+- Added a repeatable 25-question candidate latency diagnostic. Its first run found zero full-text candidates because all question terms were required in a single chunk. Switched to OR of PostgreSQL-normalized terms for candidate retrieval and adjusted tenant/revocation checks to assert explicit source-scope denial. The complete persistent-volume preflight passed after the fix. A browser walkthrough confirmed the local sign-in, historical answer, and exact citation drill-down. See [retrieval diagnostic](release/v13-retrieval-diagnostic.md). Relevance and answer quality are not inferred from returned candidate counts.
 
 ## 2026-11-18 Stage B vector and Stage C candidate baseline
 

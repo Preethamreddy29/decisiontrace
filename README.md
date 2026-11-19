@@ -30,12 +30,12 @@ For static checks alone, run `python tools/check_all.py`. The [latest verified c
 - Governed source and decision workflows: text/file intake, allowlisted push snapshots, correction history, independent approval, idempotent protected mutations, audit/outbox records, and author-controlled source revocation.
 - Bounded structured answers with exact authorized citations, conflict and abstention states, and a source drill-down. A later correction changes current evidence while earlier recorded-time queries can inspect the historical version unless it was revoked.
 - Reviewed downstream watches for `tests`, `implements`, and `measures` relations. Reviewers classify a source-version change as drift or alignment; automatic semantic drift detection remains open.
-- Internal full-text, pinned token-set vector, and exact rank-fused candidate search over authorized temporal chunks, a safe index repair command, and local outbox/recovery checks. The vector profile is a deterministic baseline, not a semantic model. Search candidates are not yet used to generate demo answers.
+- Internal full-text, pinned token-set vector, and exact rank-fused candidate search over authorized temporal chunks, a safe index repair command, and local outbox/recovery checks. A repeatable 25-question timing diagnostic now compares these candidate paths. The vector profile is a deterministic baseline, not a semantic model. Search candidates are not yet used to generate demo answers.
 
 ## Project records
 
 - [Progress and open work](docs/progress.md) · [Implementation plan](docs/implementation-plan.md) · [Requirements traceability](docs/requirements-traceability.md)
-- [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md) · [Vector foundation](docs/release/v11-vector-foundation.md) · [Hybrid candidate baseline](docs/release/v12-hybrid-candidates.md)
+- [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md) · [Vector foundation](docs/release/v11-vector-foundation.md) · [Hybrid candidate baseline](docs/release/v12-hybrid-candidates.md) · [Retrieval timing diagnostic](docs/release/v13-retrieval-diagnostic.md)
 - [v0.6 demo workflow](docs/release/v06-change-watch-revocation.md) · [Independent label review packet](docs/release/v05-review-packet.md) · [Design decisions](docs/decisions/ADR-001-postgresql-full-text-and-pgvector.md)
 
 The project is [MIT licensed](LICENSE). DecisionTrace owns its database. Future RuleTwin integration will use a versioned contract and consumer tests.

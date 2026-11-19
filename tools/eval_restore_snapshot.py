@@ -31,7 +31,8 @@ def main() -> None:
         assert chunks == 0, chunks
 
     assert open_evidence(url, actor, revoked_source, revoked_version, as_of) is None
-    assert full_text_chunks(url, actor, "Withdrawn fictional working note", date(2026, 6, 1), as_of) == []
+    assert full_text_chunks(url, actor, "Withdrawn fictional working note", date(2026, 6, 1), as_of,
+                            source_ids=[revoked_source]) == []
 
     live_source = stable_id("source/SRC-MEETING-001")
     live_version = stable_id("version/SRC-MEETING-001-v2")

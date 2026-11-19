@@ -1,6 +1,6 @@
 # DecisionTrace implementation plan
 
-**Updated:** 2026-11-18. The entries below distinguish the bounded fictional demo from the full portfolio v1 gates. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md) for the full ordered work and exit evidence.
+**Updated:** 2026-11-19. The entries below distinguish the bounded fictional demo from the full portfolio v1 gates. See the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md) for the full ordered work and exit evidence.
 
 | Milestone | Current evidence | Gate status |
 |---|---|---|
@@ -13,8 +13,8 @@
 
 ## Current build sequence
 
-1. Finish Stage A with a manual UI walkthrough and clean local stack run. CI already proves current event handling, concurrent revocation, and a same-server restore of an API-revoked source.
-2. Complete Stage B from the [vector foundation](release/v11-vector-foundation.md): a pinned semantic model profile, source/artifact storage, stage traces, resumable ingestion, and a measured retrieval/index upgrade path.
+1. Stage A local upgrade and manual UI walkthrough passed on 2026-11-19. CI proves event handling, concurrent revocation, and a same-server restore of an API-revoked source. The later clean-host release drill remains open.
+2. Complete Stage B from the [vector foundation](release/v11-vector-foundation.md): a pinned semantic model profile, source/artifact storage, stage traces, resumable ingestion, and a reviewed relevance set, per-stage resource report, and scalable retrieval/index upgrade path.
 3. Advance Stage C from the [hybrid candidate baseline](release/v12-hybrid-candidates.md) to reranking, structured generation, deterministic claim/citation verification, and measured comparison against the current resolver.
 4. Complete the governed source/review breadth, evidence-grounded drift and health, the security and evaluation gates, then the clean-host release drills and v1 proof.
 

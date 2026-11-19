@@ -27,6 +27,7 @@ def main() -> None:
         "tools.eval_v10_rebuild", "tools.eval_v11_vector", "tools.eval_v12_hybrid",
     ):
         run(*COMPOSE, "exec", "-T", "api", "python", "-m", module)
+    run(*COMPOSE, "exec", "-T", "api", "python", "-m", "tools.bench_retrieval")
     run(sys.executable, "tools/verify_backup_restore.py")
     print("Demo preflight passed. Open http://127.0.0.1:5174/ and follow docs/release/demo-test-guide.md.")
 

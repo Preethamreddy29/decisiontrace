@@ -13,9 +13,9 @@ from .locks import evidence_lock_key
 from .seed import stable_id
 
 
-SEARCH_VERSION = "postgres-english-fts-v1"
+SEARCH_VERSION = "postgres-english-fts-or-v2"
 VECTOR_SEARCH_VERSION = "pgvector-token-set-v1"
-HYBRID_SEARCH_VERSION = "exact-authorized-rrf-v1"
+HYBRID_SEARCH_VERSION = "exact-authorized-rrf-v2"
 
 
 @dataclass(frozen=True)
@@ -54,7 +54,7 @@ def full_text_chunks(
         return []
 
     sql = (
-        "WITH query_terms AS (SELECT plainto_tsquery('english'::regconfig, %s) AS tsq) "
+        "WITH query_terms AS (SELECT replace(plainto_tsquery('english'::regconfig, %s)::text, ' & ', ' | ')::tsquery AS tsq) "
         "SELECT s.source_id, s.id, s.external_label, s.version, s.kind, s.status, "
         "c.section_id, c.chunk_id, c.start_char, c.end_char, c.content_text, "
         "c.content_sha256, c.chunker_version, s.content, s.content_sha256, "
@@ -198,7 +198,7 @@ def hybrid_candidate_chunks(
         return []
 
     sql = (
-        "WITH q AS (SELECT plainto_tsquery('english'::regconfig, %s) AS tsq, %s::vector AS v), "
+        "WITH q AS (SELECT replace(plainto_tsquery('english'::regconfig, %s)::text, ' & ', ' | ')::tsquery AS tsq, %s::vector AS v), "
         "authorized AS ("
         "SELECT s.source_id, s.id AS version_id, s.external_label, s.version, s.kind, s.status, "
         "s.recorded_at, s.content AS source_text, s.content_sha256 AS source_sha, "
