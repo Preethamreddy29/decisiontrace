@@ -22,7 +22,7 @@ The preflight builds the web app and local containers, seeds the fictional corpu
 
 The API readiness endpoint is [http://127.0.0.1:8001/health/ready](http://127.0.0.1:8001/health/ready). To stop the stack while keeping local data, run `docker compose --env-file .env.example down`. The demo binds services to loopback and uses published fictional credentials; do not load real customer or confidential data.
 
-For static checks alone, run `python tools/check_all.py`. The [latest verified code CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44351410245) covers the full live suite, index rebuild, and restore smoke. CI evidence is for the synthetic local stack; it does not close the v1 release gates.
+For static checks alone, run `python tools/check_all.py`. A [verified main-branch CI run](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44443103077) covers the full live suite, retrieval timing diagnostic, index rebuild, and restore smoke. CI evidence is for the synthetic local stack; it does not close the v1 release gates.
 
 ## What is implemented
 
