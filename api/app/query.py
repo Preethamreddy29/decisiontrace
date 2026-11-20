@@ -20,10 +20,12 @@ from .db import connect
 from .seed import stable_id
 from .sections import parse_sections, section_for_span
 from .locks import evidence_lock_key
+from .verification import VERSION as VERIFIER_VERSION, verify_answer
 
 
 CORPUS_VERSION = "dt-synthetic-v0.1"
-PIPELINE = {"retrieval": "temporal-sections-v0.4", "answer": "exact-source-sentence-v0.4"}
+PIPELINE = {"retrieval": "temporal-sections-v0.4", "answer": "exact-source-sentence-v0.4",
+            "verification": VERIFIER_VERSION}
 
 
 class QueryRequest(BaseModel):
@@ -257,18 +259,14 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
         if existing:
             if existing[0].strip() != digest:
                 raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
-            current = {s.version_id: s for s in visible_sources(database_url, actor, query.recorded_as_of, query.source_ids)}
-            if any(
-                c["version_id"] not in current or
-                current[c["version_id"]].content[c["start_char"]:c["end_char"]] != c["quote"] or
-                section_for_span(current[c["version_id"]].kind, current[c["version_id"]].content,
-                                 c["start_char"], c["end_char"]).section_id != c["section_id"]
-                for claim in existing[1]["claims"] for c in claim["citations"]
-            ):
+            if not verify_answer(database_url, actor, query, existing[1]):
                 raise HTTPException(status_code=409, detail="Stored answer references evidence that is no longer available")
             return existing[1]
 
         answer = resolve(database_url, actor, query)
+        if not verify_answer(database_url, actor, query, answer):
+            answer = _empty("abstain", "Cited evidence did not pass verification.", query,
+                            query.valid_on or query.recorded_as_of.date())
         connection.execute(
             "INSERT INTO query_requests (actor_id, tenant_id, idempotency_key, request_sha256, answer) "
             "VALUES (%s, %s, %s, %s, %s::jsonb) ON CONFLICT DO NOTHING",
@@ -280,6 +278,8 @@ def query_with_idempotency(database_url: str, actor: Actor, query: QueryRequest,
         ).fetchone()
         if stored[0].strip() != digest:
             raise HTTPException(status_code=409, detail="Idempotency-Key was used for a different query")
+        if not verify_answer(database_url, actor, query, stored[1]):
+            raise HTTPException(status_code=409, detail="Stored answer references evidence that is no longer available")
         return stored[1]
 
 

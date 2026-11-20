@@ -4,7 +4,7 @@
 **Code baseline:** DecisionTrace main code at [3ac9fb7](https://github.com/Preethamreddy29/decisiontrace/commit/3ac9fb79b6cd8f8135c42f5147daa919912ddca0), with [passing main CI](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44443407605).
 **Scope:** The running v0.6 fictional local demo, the Stage A reliability work, the Stage B retrieval foundation, the first Stage C candidate fusion, and the work required for the portfolio runbook's v1 release.
 
-This is a working implementation map, not a v1 release declaration. The interactive demo answers two fictional policy topics from authorized source versions. Internal full-text, token-set vector, and fused retrieval return authorized candidates but do not yet generate the displayed answer. The [portfolio runbook](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/02_DECISIONTRACE_IMPLEMENTATION_RUNBOOK.md) defines the broader product and release gates.
+This is a working implementation map, not a v1 release declaration. The interactive demo answers two fictional policy topics from authorized source versions. Public answers now pass an exact-quotation and authorization gate before storage or return. Internal full-text, token-set vector, and fused retrieval return authorized candidates but do not yet generate the displayed answer. The [portfolio runbook](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/02_DECISIONTRACE_IMPLEMENTATION_RUNBOOK.md) defines the broader product and release gates.
 
 ## 1. Product context and the signature demonstration
 
@@ -43,7 +43,8 @@ flowchart TD
     Q["POST /v1/query"] --> Scope["Server-derived tenant and role<br/>valid date and recorded cutoff"]
     Scope --> Versions["Authorized source versions<br/>and approved decision evidence"]
     Versions --> Resolver["Bounded topic rules<br/>exact source sentence"]
-    Resolver --> Answer["Answered, conflict,<br/>abstain or denied"]
+    Resolver --> Verify["Exact quote, scope<br/>and approval gate"]
+    Verify --> Answer["Answered, conflict,<br/>abstain or denied"]
     Answer --> Citation["GET exact source version<br/>fresh authorization and quote check"]
 
     C["Internal candidate functions"] --> Filter["Tenant, role, time, revocation,<br/>source and profile predicates in SQL"]
@@ -75,7 +76,7 @@ An auditor can create text evidence or upload bounded UTF-8 Markdown, transcript
 
 ### 3.2 Review, answer, and citation
 
-A decision draft binds currently permitted evidence versions and an effective interval. An independent auditor reviews that exact draft under If-Match; approval rechecks the evidence. The bounded resolver first filters permitted sources by recorded cutoff, selects the relevant approved decision or fictional fallback, quotes a sentence that exists in the stored source, and returns structured status and citation data. Unsupported questions abstain. Stored idempotent answers are checked against still-visible exact source text and section on retry. The UI opens cited content through a separately authorized source-version route. This is exact-source quotation with bounded topic rules, not model entailment verification.
+A decision draft binds currently permitted evidence versions and an effective interval. An independent auditor reviews that exact draft under If-Match; approval rechecks the evidence. The bounded resolver first filters permitted sources by recorded cutoff, selects the relevant approved decision or fictional fallback, quotes a sentence that exists in the stored source, and returns structured status and citation data. Unsupported questions abstain. Before storage or display, the exact-citation gate checks source/section identity, quote offsets, tenant and role, valid and recorded time, revocation, and any approved decision binding. It checks stored idempotent answers again on retry. The UI opens cited content through a separately authorized source-version route. This is exact-source quotation with bounded topic rules, not general semantic entailment verification. See the [exact citation gate](v14-exact-citation-gate.md).
 
 ### 3.3 Change watches and revocation
 
@@ -98,7 +99,7 @@ The table maps the [DT-01–DT-12 requirements](../requirements-traceability.md)
 | DT-03 Human review | Partial | Draft, separate auditor review, immutable review versions, stale/self-review rejection. | Extraction correction queue and full contract fields/relations. |
 | DT-04 Temporal history | Bounded pass | Valid/recorded distinctions, correction and supersession cases in seed/demo tests. | Broader multi-source and independently reviewed temporal evaluation. |
 | DT-05 Hybrid retrieval | Partial | Authorized full-text, pinned token-set vector, exact rank fusion, repair and timing diagnostic. | Semantic profile, relevance labels, reranking, scalable index and answer integration. |
-| DT-06 Cited answers | Partial | Exact quoted source sentences, offsets, section drill-down, conflict/abstain states. | Retrieval-backed generation and deterministic support verifier for general claims. |
+| DT-06 Cited answers | Partial | Exact quotes, offsets, section drill-down, conflict/abstain states, and a fail-closed server gate for current claims and cached replies. | Retrieval-backed generation and evaluated support verification for arbitrary generated claims. |
 | DT-07 Drift | Partial | Three typed watches and independent drift/alignment review. | Automatic evidence-grounded findings, contradiction rules, health dashboard, precision/recall. |
 | DT-08 Revocation/deletion | Partial | Immediate source denial, chunk/cache cleanup, same-server restore proof. | Physical erasure/retention, all artifact/index lineage, crash/retry and clean-host recovery. |
 | DT-09 Model versions | Partial | Explicit chunker, search, token-set profile and answer pipeline version strings. | Pinned semantic embedder/reranker/generator, model registry and compatibility enforcement. |
@@ -116,6 +117,7 @@ The table maps the [DT-01–DT-12 requirements](../requirements-traceability.md)
 | Stage A | Versioned local outbox, safe replay, concurrent read/revocation ordering, same-server restore. | [Reliability](v07-outbox-stability.md), [restore](v09-restore-smoke.md). |
 | Stage B | Full-text chunks, dry-run-first rebuild, pgvector token-set baseline. | [Full-text](v08-full-text-foundation.md), [rebuild](v10-index-rebuild.md), [vector](v11-vector-foundation.md). |
 | Early Stage C | Exact authorized rank fusion and a repeatable candidate timing diagnostic; the diagnostic led to a full-text recall fix. | [Fusion](v12-hybrid-candidates.md), [diagnostic](v13-retrieval-diagnostic.md), [main CI](https://github.com/Preethamreddy29/decisiontrace/actions/runs/44443407605). |
+| Exact citation gate | Server checks new and cached bounded answers against current authorized exact evidence; adversarial fixture rejects forged claims and citations. | [Gate record](v14-exact-citation-gate.md). |
 
 The frozen seed corpus has 14 source versions across two tenants and 25 specified questions. Fourteen paraphrases are separate regression checks. The 20-case v0.5 holdout is an agent-authored draft and needs independent label review. A 25-question timing run measured 75 calls per candidate path on one WSL2 machine; its P95 was 24.117 ms full-text, 26.437 ms token-set vector, and 35.374 ms fusion. These are candidate timings, not retrieval relevance, answer accuracy, or an SLA. See the [diagnostic record](v13-retrieval-diagnostic.md).
 
@@ -129,9 +131,10 @@ The frozen seed corpus has 14 source versions across two tenants and 25 specifie
 | DecisionTrace codex/stage-b-vector-foundation at fdb0d03 | Historical vector and fusion work branch. Its commits are ancestors of main. |
 | DecisionTrace codex/retrieval-benchmark at 354fa79 | Historical diagnostic/search-fix branch. It passed branch CI, then main was fast-forwarded to the same code commit; the later README-only commit is on main. |
 | DecisionTrace codex/implementation-reference | Branch for this documentation update, created from main. |
+| DecisionTrace codex/citation-verifier | Follow-up branch for the exact citation gate and adversarial test. |
 | Portfolio main at 7eeb108 | Published portfolio baseline; it does not yet contain the later DecisionTrace status updates. |
 | Portfolio codex/decisiontrace-status at fcc5262 | Earlier status branch, ancestor of the newer portfolio status branch. |
-| Portfolio codex/portfolio-ruletwin-sync at b898c97 | Current DecisionTrace completion-plan status branch, based on portfolio main and still separate from it. |
+| Portfolio codex/portfolio-ruletwin-sync | Current DecisionTrace completion-plan status branch, based on portfolio main and still separate from it. |
 
 No DecisionTrace Git tag existed when this snapshot was taken. The preview version in the API and documents is a product label, not a tagged release. The portfolio plan is linked from the DecisionTrace README using its status branch; readers of portfolio main alone will not see those later status commits until that branch is integrated.
 
@@ -144,8 +147,9 @@ flowchart LR
     DTD --> DTE["codex/retrieval-benchmark<br/>354fa79"]
     DTE --> DTM["main code baseline<br/>3ac9fb7"]
     DTM --> DOC["codex/implementation-reference<br/>this documentation"]
+    DOC --> CV["codex/citation-verifier<br/>exact quote gate"]
     PM["Portfolio main<br/>7eeb108"] --> PS["codex/decisiontrace-status"]
-    PS --> PP["codex/portfolio-ruletwin-sync<br/>b898c97"]
+    PS --> PP["codex/portfolio-ruletwin-sync<br/>status branch"]
 ~~~
 
 ### Branch and release procedure
@@ -156,7 +160,7 @@ The observed DecisionTrace work used focused codex/ branches. The vector and dia
 
 The order below follows the [portfolio completion plan](https://github.com/Preethamreddy29/enterprise-rule-intelligence/blob/codex/portfolio-ruletwin-sync/docs/05_DECISIONTRACE_COMPLETION_PLAN.md). Work already completed in a stage is stated above; each item here is still required for full v1.
 
-The planned v1 pipeline adds the following stages. It is a target architecture; only the bounded intake, review, indexing, and candidate-fusion pieces exist today.
+The planned v1 pipeline adds the following stages. It is a target architecture; only the bounded intake, review, indexing, candidate fusion, and exact-quotation gate pieces exist today.
 
 ~~~mermaid
 flowchart LR
@@ -176,7 +180,7 @@ flowchart LR
 ~~~
 
 1. **Complete Stage B pipeline foundation.** Add an artifact/source storage abstraction and a pinned local semantic embedding profile with model checksum and a compatible full rebuild. Add resumable, idempotent ingestion states and per-stage traces/resources. Build an independently reviewed relevance set, compare keyword/vector/hybrid candidates, and specify a scalable authorized index path. Exit when model/index versions are reproducible, unauthorized candidates never leave storage, an interrupted ingest resumes, and relevance and resource results are recorded.
-2. **Complete Stage C answers.** Add reranking, temporal context assembly, structured local generation, deterministic claim/citation checks, and explicit abstention or degraded behavior. Keep the bounded resolver as a measured baseline. Exit when the seed and reviewed cases pass, every claim opens authorized evidence, and invented, revoked, wrong-time, wrong-tenant, or unsupported citations fail closed.
+2. **Complete Stage C answers.** Add reranking, temporal context assembly, structured local generation, evaluated claim-support checks beyond the current exact-quotation gate, and explicit abstention or degraded behavior. Keep the bounded resolver as a measured baseline. Exit when the seed and reviewed cases pass, every claim opens authorized evidence, and invented, revoked, wrong-time, wrong-tenant, or unsupported citations fail closed.
 3. **Finish the governed MVP.** Add the remaining PRD, ticket, ADR, test, release and metric adapters; extracted claim/decision suggestions with a human correction queue; complete scope, owner, approver, assumptions, expiry and revisit fields; and the required supports/contradicts/corrects/supersedes/implements/tests/measures relations. Exit with version correction and approval tests for every type and tenant/role checks across source, claim, relation, review, and export paths.
 4. **Build evidence-grounded drift and health.** Compare active approved decisions with downstream implementation, tests, releases, metrics and assumptions. Persist findings with both exact evidence sides and let reviewers resolve them. Exit with true/false drift fixtures, version and revocation updates, and reported precision/recall.
 5. **Harden identity, privacy and failures.** Test a real OIDC issuer, browser sign-in and refresh once a test provider exists. Complete the permission matrix, injection suite, deletion/retention propagation, worker-crash and model/index outage drills, telemetry redaction, and safe degraded modes. Exit only when hard security gates in the portfolio evidence matrix pass.
@@ -208,6 +212,6 @@ The optional --apply repairs detected drift. Stop services while retaining the d
 ## 9. Source map
 
 - [README](../../README.md), [progress log](../progress.md), [phase plan](../implementation-plan.md), and [requirements traceability](../requirements-traceability.md) give the quick status and dated history.
-- [API routes](../../api/app/main.py), [query resolver](../../api/app/query.py), [source and decision workflow](../../api/app/workflow.py), [retrieval](../../api/app/retrieval.py), [indexing](../../api/app/indexing.py), [watches](../../api/app/change_watch.py), [worker](../../api/app/worker.py), and [migrations](../../api/migrations) are the runtime source of truth.
+- [API routes](../../api/app/main.py), [query resolver](../../api/app/query.py), [exact citation gate](../../api/app/verification.py), [source and decision workflow](../../api/app/workflow.py), [retrieval](../../api/app/retrieval.py), [indexing](../../api/app/indexing.py), [watches](../../api/app/change_watch.py), [worker](../../api/app/worker.py), and [migrations](../../api/migrations) are the runtime source of truth.
 - [OpenAPI](../../contracts/openapi.json), [event schema](../../contracts/events.schema.json), [architecture notes](../architecture/data-model.md), [temporal semantics](../architecture/temporal-model.md), and [ADRs](../decisions) define the design and contract intent.
 - [Corpus manifest](../../corpus/manifest.json), [seed questions](../../corpus/gold.json), [draft holdout](../../corpus/holdout_v05_draft.json), [CI workflow](../../.github/workflows/ci.yml), and [demo preflight](../../tools/demo_preflight.py) anchor verification.

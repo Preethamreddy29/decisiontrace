@@ -29,6 +29,7 @@ COPY tools/eval_v10_rebuild.py /workspace/tools/eval_v10_rebuild.py
 COPY tools/eval_v11_vector.py /workspace/tools/eval_v11_vector.py
 COPY tools/eval_v12_hybrid.py /workspace/tools/eval_v12_hybrid.py
 COPY tools/bench_retrieval.py /workspace/tools/bench_retrieval.py
+COPY tools/eval_v14_verifier.py /workspace/tools/eval_v14_verifier.py
 USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

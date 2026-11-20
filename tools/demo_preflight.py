@@ -25,6 +25,7 @@ def main() -> None:
         "tools.eval_v06_revocation", "tools.eval_v06_watches", "tools.eval_v07_outbox",
         "tools.eval_v07_concurrency", "tools.eval_v08_search",
         "tools.eval_v10_rebuild", "tools.eval_v11_vector", "tools.eval_v12_hybrid",
+        "tools.eval_v14_verifier",
     ):
         run(*COMPOSE, "exec", "-T", "api", "python", "-m", module)
     run(*COMPOSE, "exec", "-T", "api", "python", "-m", "tools.bench_retrieval")

@@ -3,6 +3,10 @@
 **As of:** 2026-11-20
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
 
+## 2026-11-20 exact citation gate
+
+- Added a fail-closed server verification step for the bounded answer path. It rechecks quote text and offsets, section, source identity, tenant/role/time access, revocation, and any approved decision evidence binding before storing or returning a claim. Tampered cached answers are refused on retry. The new adversarial fixture and full local preflight passed, including the prior demo and restore checks. This is exact-quotation proof, not semantic entailment for generated claims. See [release record](release/v14-exact-citation-gate.md).
+
 ## 2026-11-20 implementation reference
 
 - Added the [full implementation reference](release/implementation-reference.md): current architecture and data flow diagrams, runtime source map, DT-01–DT-12 status, branch ancestry, CI and demo evidence, and ordered v1 exit work. The document keeps the bounded demo answer path separate from internal retrieval candidates and does not mark the open review, identity, or release gates complete.
