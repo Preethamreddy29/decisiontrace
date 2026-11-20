@@ -1,7 +1,11 @@
 # Progress
 
-**As of:** 2026-11-19
+**As of:** 2026-11-20
 **Milestone:** Phase 0 complete; Phase 1 design gate passed; Phase 2 local foundation gate passed; v0.6 preview available; full Phase 3 and Phase 4 product gates open
+
+## 2026-11-20 implementation reference
+
+- Added the [full implementation reference](release/implementation-reference.md): current architecture and data flow diagrams, runtime source map, DT-01–DT-12 status, branch ancestry, CI and demo evidence, and ordered v1 exit work. The document keeps the bounded demo answer path separate from internal retrieval candidates and does not mark the open review, identity, or release gates complete.
 
 ## 2026-11-19 local upgrade and candidate timing checkpoint
 

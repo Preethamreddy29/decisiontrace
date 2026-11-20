@@ -34,7 +34,7 @@ For static checks alone, run `python tools/check_all.py`. A [verified main-branc
 
 ## Project records
 
-- [Progress and open work](docs/progress.md) · [Implementation plan](docs/implementation-plan.md) · [Requirements traceability](docs/requirements-traceability.md)
+- [Complete implementation reference and architecture](docs/release/implementation-reference.md) · [Progress and open work](docs/progress.md) · [Implementation plan](docs/implementation-plan.md) · [Requirements traceability](docs/requirements-traceability.md)
 - [Stage A outbox and revocation ordering](docs/release/v07-outbox-stability.md) · [Full-text foundation](docs/release/v08-full-text-foundation.md) · [Restore smoke](docs/release/v09-restore-smoke.md) · [Index rebuild](docs/release/v10-index-rebuild.md) · [Vector foundation](docs/release/v11-vector-foundation.md) · [Hybrid candidate baseline](docs/release/v12-hybrid-candidates.md) · [Retrieval timing diagnostic](docs/release/v13-retrieval-diagnostic.md)
 - [v0.6 demo workflow](docs/release/v06-change-watch-revocation.md) · [Independent label review packet](docs/release/v05-review-packet.md) · [Design decisions](docs/decisions/ADR-001-postgresql-full-text-and-pgvector.md)
 
